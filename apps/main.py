@@ -1,0 +1,33 @@
+from pathlib import Path
+
+from fastapi import FastAPI
+
+from apps.api.auth import router as auth_router
+from apps.api.user import router as user_router
+from apps.core.config import settings
+from apps.db.session import Base, engine
+
+Base.metadata.create_all(bind=engine)
+
+app = FastAPI(
+    title=settings.app_name, version=settings.app_version, debug=settings.debug
+)
+
+app.include_router(user_router)
+app.include_router(auth_router)
+
+
+@app.get("/")
+def test():
+    return {"msg": "Hello World"}
+
+
+@app.get("/test")
+def check():
+    return {
+        "msg": "Success",
+        "app": settings.app_name,
+        "debug": settings.debug,
+        "db_url": settings.database_url.unicode_string(),
+        "base": Path(__file__).parent.parent,
+    }

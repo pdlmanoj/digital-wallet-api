@@ -1,0 +1,18 @@
+[project]
+name = "digital-wallet-api"
+version = "0.1.0"
+description = "A digital wallet API built with FastAPI."
+readme = "README.md"
+requires-python = ">=3.12, <3.14"
+dependencies = [
+    "bcrypt>=5.0.0",
+    "fastapi[standard]>=0.139.2",
+    "psycopg[binary]>=3.3.4",
+    "pydantic>=2.13.4",
+    "pyjwt>=2.13.0",
+    "python-jose>=3.5.0",
+    "sqlalchemy>=2.0.51",
+    "uuid7>=0.1.0",
+]
+
+
