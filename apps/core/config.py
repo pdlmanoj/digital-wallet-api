@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     access_token_expire_time: int = 5  # min
     refresh_token_secret_key: str
     refresh_token_expire_time: int = 1  # day
+    maileroo_base_url: str
+    maileroo_domain_email: str
+    mailerro_key: str
 
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
