@@ -21,18 +21,3 @@ wallet-api/
 ├── .env.example
 ├── .gitignore
 └── README.md
-
-#TODO
-
-1. Authentication
-    - Register
-    - Login
-    - JWT
-    - Password hashing
-    - Refresh tokens
-
-
-2. wallet
-    - create wallet automatically
-    - view balance
-    - wallet status

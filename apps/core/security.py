@@ -91,13 +91,13 @@ def decode_token(token: str, token_type: Literal["access", "refresh"] = "access"
     except (InvalidTokenError, TypeError, DecodeError):
         if token_type == "access":
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Could not validate credentials",
                 headers={"WWW-Authenticate": "Bearer"},
             )
         else:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Could not validate refresh token",
             )
 
@@ -108,7 +108,7 @@ def validate_refresh_token(token: str, db: Session):
     payload = decode_token(token, token_type="refresh")
     if not payload:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate refresh token",
         )
 
@@ -117,12 +117,12 @@ def validate_refresh_token(token: str, db: Session):
 
     if user is None:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
 
     if user.status == "inactive":
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="User not active"
+            status_code=status.HTTP_403_FORBIDDEN, detail="User not active"
         )
 
     return create_token(data={"sub": str(user.id), "name": user.name})
@@ -141,7 +141,7 @@ def get_current_user(
     payload = decode_token(token)
     if not payload:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
@@ -163,7 +163,7 @@ def get_current_user(
         )
     if user.status == "inactive":
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="User not active"
+            status_code=status.HTTP_403_FORBIDDEN, detail="User not active"
         )
 
     return user
