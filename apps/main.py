@@ -5,9 +5,8 @@ from fastapi import FastAPI
 from apps.api.auth import router as auth_router
 from apps.api.user import router as user_router
 from apps.core.config import settings
-from apps.db.session import Base, engine
 
-Base.metadata.create_all(bind=engine)
+# Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title=settings.app_name, version=settings.app_version, debug=settings.debug
