@@ -64,7 +64,7 @@ def get_user(id: UUID, db: Annotated[Session, Depends(get_db)]):
 
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
 
     return UserResponseSchema.model_validate(user)
@@ -95,3 +95,16 @@ def verify_otp(
         )
 
     return {"msg": "OTP verified successfully"}
+
+@router.post("/resend-otp")
+def resend_otp(email: Annotated[EmailStr, Body(embed=True)]):
+
+    response = mileroo_email.send_email(email=email)
+
+    if response.json().get("success") != True:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="OTP resend failed, try again later"
+        )
+
+    return {"msg": "Resend OTP successfully"}
