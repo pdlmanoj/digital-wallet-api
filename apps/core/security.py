@@ -23,7 +23,7 @@ REFRESH_TOKEN_EXPIRE_IN = settings.refresh_token_expire_time
 ALGORITHM = settings.algorithm
 
 authentication_error_message = "You must be authenticated to perform this action."
-
+authorization_error_message = "You are not permitted to perfom this action."
 oauth_schema = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
 
 
@@ -167,3 +167,36 @@ def get_current_user(
         )
 
     return user
+
+
+def get_admin(
+    token: Annotated[str, Depends(oauth_schema)],
+    db: Annotated[Session, Depends(get_db)],
+):
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=authentication_error_message,
+        )
+
+    payload = decode_token(token)
+    user_id: User | None = payload.get("sub")
+
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials.",
+        )
+
+    is_admin = db.scalar(
+        select(User).where(
+            User.id == user_id, User.status == "active", User.is_admin.is_(True)
+        )
+    )
+
+    if not is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail=authorization_error_message
+        )
+
+    return is_admin

@@ -6,29 +6,29 @@ from pydantic import EmailStr
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
-from apps.core.security import password_security
+from apps.core.security import get_admin, get_current_user, password_security
 from apps.db.session import get_db
 from apps.models.user import User
 from apps.schemas.user import UserCreateSchema, UserResponseSchema
 from apps.utils.Email.email import email as mileroo_email
 from apps.utils.utils import validate_otp
 
-router = APIRouter(prefix="/users", tags=["User"])
+router = APIRouter(prefix="/user", tags=["User"])
 
 
 @router.post("/signup", response_model=UserResponseSchema)
 def create_user(user: UserCreateSchema, db: Annotated[Session, Depends(get_db)]):
 
-    # create user
-    smth = select(User).filter(
-        or_(User.email == user.email, User.phone_number == user.phone_number)
+    query = db.scalar(
+        select(User).filter(
+            or_(User.email == user.email, User.phone_number == user.phone_number)
+        )
     )
-
-    query = db.execute(smth).scalars().one_or_none()  # type: ignore
 
     if query:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="User already exists"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="It seem you already have an account with us. Please proceed with login.",
         )
 
     hash_password = password_security.hash_password(user.password)
@@ -50,9 +50,12 @@ def create_user(user: UserCreateSchema, db: Annotated[Session, Depends(get_db)])
 
 
 @router.get("/users", response_model=list[UserResponseSchema])
-def get_users(db: Annotated[Session, Depends(get_db)]):
-
-    return db.execute(select(User)).scalars().all()
+def get_users(
+    is_admin: Annotated[User, Depends(get_admin)],
+    db: Annotated[Session, Depends(get_db)],
+):
+    if is_admin:
+        return db.execute(select(User)).scalars().all()
 
 
 @router.get("/user/{id}", response_model=UserResponseSchema)
@@ -96,6 +99,7 @@ def verify_otp(
 
     return {"msg": "OTP verified successfully"}
 
+
 @router.post("/resend-otp")
 def resend_otp(email: Annotated[EmailStr, Body(embed=True)]):
 
@@ -104,7 +108,54 @@ def resend_otp(email: Annotated[EmailStr, Body(embed=True)]):
     if response.json().get("success") != True:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="OTP resend failed, try again later"
+            detail="OTP resend failed, try again later",
         )
 
     return {"msg": "Resend OTP successfully"}
+
+
+@router.post("/change-password")
+def change_password(
+    current_password: Annotated[str, Body(embed=True)],
+    new_password: Annotated[str, Body(embed=True)],
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    if len(new_password) < 8:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password must be greater than 8 character.",
+        )
+
+    is_valid = password_security.verify_password(
+        current_password, current_user.password
+    )
+
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Your current password doesn't match.",
+        )
+
+    if current_password == new_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You cannot set current password as new password",
+        )
+
+    hash_password = password_security.hash_password(new_password)
+
+    if current_user.old_password and password_security.verify_password(
+        new_password, current_user.old_password
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You new password cannot be same as previous password. Choose different password.",
+        )
+
+    current_user.old_password = current_user.password
+    current_user.password = hash_password
+    db.add(current_user)
+    db.commit()
+
+    return {"msg": "Password changed successfully"}

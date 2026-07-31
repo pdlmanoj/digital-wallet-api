@@ -13,9 +13,11 @@ class User(Base):
     name: Mapped[str]
     email: Mapped[str] = mapped_column(unique=True)
     password: Mapped[str]
+    old_password: Mapped[str | None]
     phone_number: Mapped[str]
     gender: Mapped[Literal["male", "female", "other"]]
     date_of_birth: Mapped[date]
     status: Mapped[Literal["active", "inactive"]] = mapped_column(
         server_default="active"
     )
+    is_admin: Mapped[bool] = mapped_column(server_default="false")
