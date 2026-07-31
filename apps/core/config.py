@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     environement: Literal["dev", "testing"] = "dev"
     access_token_secret_key: str
     algorithm: str
-    access_token_expire_time: int = 5  # min
+    access_token_expire_time: int = 10  # min
     refresh_token_secret_key: str
     refresh_token_expire_time: int = 1  # day
     maileroo_base_url: str
