@@ -8,6 +8,7 @@ from apps.core.security import create_token, get_current_user, validate_refresh_
 from apps.db.session import get_db
 from apps.models.user import User
 from apps.repositories.db import authenticate_user
+from apps.utils.utils import record_success_password
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -24,6 +25,14 @@ def token(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password",
         )
+
+    if user.status == "inactive":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Sorry, your account status is {user.status}. Please contact admin to reactivate you account.",
+        )
+    else:
+        record_success_password(user, db)
 
     access_token = create_token(data={"sub": str(user.id), "name": user.name})
     refresh_token = create_token(
