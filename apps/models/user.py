@@ -2,6 +2,7 @@ from datetime import date
 from typing import Literal
 from uuid import UUID
 
+from sqlalchemy import false
 from sqlalchemy.orm import Mapped, mapped_column
 from uuid_extensions import uuid7
 
@@ -17,7 +18,8 @@ class User(Base):
     phone_number: Mapped[str]
     gender: Mapped[Literal["male", "female", "other"]]
     date_of_birth: Mapped[date]
-    status: Mapped[Literal["active", "inactive"]] = mapped_column(
+    status: Mapped[Literal["active", "inactive", "password_lock"]] = mapped_column(
         server_default="active"
     )
-    is_admin: Mapped[bool] = mapped_column(server_default="false")
+    is_admin: Mapped[bool] = mapped_column(server_default=false())
+    login_attempt: Mapped[int] = mapped_column(server_default="0")
