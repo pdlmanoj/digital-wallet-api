@@ -136,3 +136,8 @@ def deactivate(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Wallet already deactivated.",
         )
+
+# TODO: default wallet , multi currency wallet support
+
+#######################################################
+
