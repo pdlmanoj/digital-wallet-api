@@ -18,7 +18,7 @@ class Email:
             "Content-Type": "application/json",
         }
 
-    def create_payload(self, email_to: str, otp: str, email_template: str) -> dict:
+    def create_payload(self, email_to: str, email_template: str) -> dict:
 
         return {
             "from": {
@@ -40,7 +40,7 @@ class Email:
         otp_exp_minute = EMAIL_VERIFICATION_OTP_EXPIRED_IN // 60
         email_template = generate_email_template(otp, otp_exp_minute)
         headers = self.get_headers()
-        payload = self.create_payload(email, otp, email_template)
+        payload = self.create_payload(email, email_template)
 
         response = requests.post(
             f"{self.config.maileroo_base_url}/emails", json=payload, headers=headers

@@ -4,6 +4,7 @@ from fastapi import FastAPI
 
 from apps.api.auth import router as auth_router
 from apps.api.user import router as user_router
+from apps.api.wallet import router as wallet_router
 from apps.core.config import settings
 
 # Base.metadata.create_all(bind=engine)
@@ -14,6 +15,7 @@ app = FastAPI(
 
 app.include_router(user_router)
 app.include_router(auth_router)
+app.include_router(wallet_router)
 
 
 @app.get("/")
