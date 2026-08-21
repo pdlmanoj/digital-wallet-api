@@ -54,8 +54,7 @@ def get_users(
     is_admin: Annotated[User, Depends(get_admin)],
     db: Annotated[Session, Depends(get_db)],
 ):
-    if is_admin:
-        return db.execute(select(User)).scalars().all()
+    return db.execute(select(User)).scalars().all()
 
 
 @router.get("/user/{id}", response_model=UserResponseSchema)
