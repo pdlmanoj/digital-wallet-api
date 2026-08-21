@@ -36,10 +36,9 @@ def create(
             detail="Balance cannot be negative or 0",
         )
 
-    smth = select(Wallet).where(Wallet.user_id == current_user.id)
-    is_exist = db.scalars(smth).one_or_none()
+    query = get_user_wallet(current_user.id, db)
 
-    if is_exist:
+    if query:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="It seems you already have a wallet account with us. You can't recreate new wallet again.",
@@ -137,3 +136,8 @@ def deactivate(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Wallet already deactivated.",
         )
+
+# TODO: default wallet , multi currency wallet support
+
+#######################################################
+
