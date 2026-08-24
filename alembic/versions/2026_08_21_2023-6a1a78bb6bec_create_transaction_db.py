@@ -1,8 +1,8 @@
 """create Transaction DB
 
-Revision ID: e01798ac1ef7
+Revision ID: 6a1a78bb6bec
 Revises: e8d440205d4f
-Create Date: 2026-08-21 15:20:19.314820
+Create Date: 2026-08-21 20:23:40.176353
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'e01798ac1ef7'
+revision: str = '6a1a78bb6bec'
 down_revision: Union[str, Sequence[str], None] = 'e8d440205d4f'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -24,14 +24,15 @@ def upgrade() -> None:
     op.create_table('transaction',
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('wallet_id', sa.Integer(), nullable=False),
-    sa.Column('type', sa.Enum('deposit', 'withdrawn', native_enum=False), nullable=False),
+    sa.Column('type', sa.Enum('deposit', 'withdraw', native_enum=False), nullable=False),
     sa.Column('amount', sa.Numeric(precision=6, scale=2), nullable=False),
     sa.Column('status', sa.Enum('pending', 'failed', 'success', native_enum=False), server_default='pending', nullable=False),
-    sa.Column('reference_id', sa.String(), nullable=False),
+    sa.Column('reference_id', sa.String(length=50), nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['wallet_id'], ['wallet.id'], ),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('reference_id')
     )
     # ### end Alembic commands ###
 
