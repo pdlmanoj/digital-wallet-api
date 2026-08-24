@@ -21,6 +21,12 @@ router = APIRouter(prefix="/wallet", tags=["Wallet"])
 def get_user_wallet(id: UUID, db: Session):
     smth = select(Wallet).where(Wallet.user_id == id)
     query = db.scalars(smth).one_or_none()
+
+    if not query:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No wallet registrated for this user.",
+        )
     return query
 
 
@@ -65,12 +71,6 @@ def details(
 ):
     query = get_user_wallet(current_user.id, db)
 
-    if not query:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No wallet registrated for this user.",
-        )
-
     return query
 
 
@@ -81,12 +81,6 @@ def user_wallets(
     is_admin: Annotated[User, Depends(get_admin)],
 ):
     query = get_user_wallet(id, db)
-
-    if not query:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No wallet registrated for this user.",
-        )
 
     return query
 
@@ -99,15 +93,10 @@ def activate(
 ):
     query = get_user_wallet(id, db)
 
-    if not query:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No wallet registrated for this user.",
-        )
     if not query.is_active:
         query.is_active = True
         db.commit()
-        return {"msg": "Wallet activated successfully."}
+        return {"msg": "User wallet activated successfully."}
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Wallet already activated."
@@ -130,14 +119,14 @@ def deactivate(
     if query.is_active:
         query.is_active = False
         db.commit()
-        return {"msg": "Wallet deactivated successfully."}
+        return {"msg": "User wallet deactivated successfully."}
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Wallet already deactivated.",
         )
 
+
 # TODO: default wallet , multi currency wallet support
 
 #######################################################
-

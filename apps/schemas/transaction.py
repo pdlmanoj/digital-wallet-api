@@ -9,16 +9,27 @@ from apps.core.pydantic import Schema
 class InitiateTransactionSchema(Schema):
     type: Literal["deposit", "withdraw"]
     amount: Decimal
-    currency: str = "NPR"
 
 
 class DepositMoneySchema(InitiateTransactionSchema):
+    currency: str = "NPR"
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
                 "type": "deposit",
                 "amount": "100.00",
                 "currency": "NPR",
+            }
+        }
+    )
+
+
+class WithdrawnMoneySchema(InitiateTransactionSchema):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "amount": "200.00",
+                "type": "withdraw",
             }
         }
     )
