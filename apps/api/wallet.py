@@ -10,8 +10,8 @@ from apps.db.session import get_db
 from apps.models.user import User
 from apps.models.wallet import Wallet
 from apps.schemas.wallet import (
+    AvailableBalanceReadSchema,
     CreateWalletFormSchema,
-    WalletDetailReadSchema,
     WalletListReadSchema,
 )
 
@@ -20,21 +20,21 @@ router = APIRouter(prefix="/wallet", tags=["Wallet"])
 
 def get_user_wallet(id: UUID, db: Session):
     smth = select(Wallet).where(Wallet.user_id == id)
-    query = db.scalars(smth).one_or_none()
+    user_wallet = db.scalars(smth).one_or_none()
 
-    if not query:
+    if not user_wallet:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No wallet registrated for this user.",
         )
-    return query
+    return user_wallet
 
 
 @router.post("/create")
 def create(
     wallet_form: CreateWalletFormSchema,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
+    is_user: Annotated[User, Depends(get_current_user)],
 ):
     if wallet_form.balance <= 0:
         raise HTTPException(
@@ -42,16 +42,16 @@ def create(
             detail="Balance cannot be negative or 0",
         )
 
-    query = get_user_wallet(current_user.id, db)
+    user_wallet = get_user_wallet(is_user.id, db)
 
-    if query:
+    if user_wallet:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="It seems you already have a wallet account with us. You can't recreate new wallet again.",
         )
 
     wallet = Wallet(
-        user_id=current_user.id,
+        user_id=is_user.id,
         currency=wallet_form.currency if wallet_form.currency else "NPR",
         balance=wallet_form.balance,
     )
@@ -64,14 +64,14 @@ def create(
     }
 
 
-@router.get("/details", response_model=WalletDetailReadSchema)
-def details(
+@router.get("/check-balance", response_model=AvailableBalanceReadSchema)
+def check_balance(
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
+    is_user: Annotated[User, Depends(get_current_user)],
 ):
-    query = get_user_wallet(current_user.id, db)
+    user_wallet = get_user_wallet(is_user.id, db)
 
-    return query
+    return user_wallet
 
 
 @router.get("/{id}", response_model=WalletListReadSchema)
@@ -80,9 +80,9 @@ def user_wallets(
     db: Annotated[Session, Depends(get_db)],
     is_admin: Annotated[User, Depends(get_admin)],
 ):
-    query = get_user_wallet(id, db)
+    user_wallet = get_user_wallet(id, db)
 
-    return query
+    return user_wallet
 
 
 @router.post("/activate/{id}")
@@ -91,10 +91,10 @@ def activate(
     db: Annotated[Session, Depends(get_db)],
     is_admin: Annotated[User, Depends(get_admin)],
 ):
-    query = get_user_wallet(id, db)
+    user_wallet = get_user_wallet(id, db)
 
-    if not query.is_active:
-        query.is_active = True
+    if not user_wallet.is_active:
+        user_wallet.is_active = True
         db.commit()
         return {"msg": "User wallet activated successfully."}
     else:
@@ -109,15 +109,15 @@ def deactivate(
     db: Annotated[Session, Depends(get_db)],
     is_admin: Annotated[User, Depends(get_admin)],
 ):
-    query = get_user_wallet(id, db)
+    user_wallet = get_user_wallet(id, db)
 
-    if not query:
+    if not user_wallet:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No wallet registrated for this user.",
         )
-    if query.is_active:
-        query.is_active = False
+    if user_wallet.is_active:
+        user_wallet.is_active = False
         db.commit()
         return {"msg": "User wallet deactivated successfully."}
     else:
