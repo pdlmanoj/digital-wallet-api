@@ -42,7 +42,7 @@ def create(
             detail="Balance cannot be negative or 0",
         )
 
-    user_wallet = get_user_wallet(is_user.id, db)
+    user_wallet = db.scalar(select(Wallet).where(Wallet.user_id == is_user.id))
 
     if user_wallet:
         raise HTTPException(
