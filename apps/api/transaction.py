@@ -206,6 +206,7 @@ def send_money(
 
     sender_wallet.balance -= data.amount
     receiver_wallet.balance += data.amount
+    db.commit()
 
     return {
         "msg": f"Amount of {sender_wallet.currency} {data.amount} send successfully to {receiver_wallet.user.name}."
