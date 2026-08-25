@@ -118,7 +118,7 @@ def change_password(
     current_password: Annotated[str, Body(embed=True)],
     new_password: Annotated[str, Body(embed=True)],
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(get_current_user)],
+    is_user: Annotated[User, Depends(get_current_user)],
 ):
     if len(new_password) < 8:
         raise HTTPException(
@@ -126,9 +126,7 @@ def change_password(
             detail="Password must be greater than 8 character.",
         )
 
-    is_valid = password_security.verify_password(
-        current_password, current_user.password
-    )
+    is_valid = password_security.verify_password(current_password, is_user.password)
 
     if not is_valid:
         raise HTTPException(
@@ -144,17 +142,17 @@ def change_password(
 
     hash_password = password_security.hash_password(new_password)
 
-    if current_user.old_password and password_security.verify_password(
-        new_password, current_user.old_password
+    if is_user.old_password and password_security.verify_password(
+        new_password, is_user.old_password
     ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="You new password cannot be same as previous password. Choose different password.",
         )
 
-    current_user.old_password = current_user.password
-    current_user.password = hash_password
-    db.add(current_user)
+    is_user.old_password = is_user.password
+    is_user.password = hash_password
+    db.add(is_user)
     db.commit()
 
     return {"msg": "Password changed successfully"}

@@ -3,10 +3,11 @@ from typing import Literal
 from uuid import UUID
 
 from sqlalchemy import false
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid_extensions import uuid7
 
 from apps.db.session import Base
+from apps.models.wallet import Wallet
 
 
 class User(Base):
@@ -23,3 +24,4 @@ class User(Base):
     )
     is_admin: Mapped[bool] = mapped_column(server_default=false())
     login_attempt: Mapped[int] = mapped_column(server_default="0")
+    user_wallet: Mapped[Wallet] = relationship(back_populates="user")

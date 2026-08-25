@@ -1,5 +1,6 @@
 import random
 from datetime import datetime
+from decimal import Decimal
 from typing import Annotated
 from uuid import UUID, uuid4
 
@@ -11,7 +12,11 @@ from apps.core.security import get_current_user, get_db
 from apps.models.transaction import Transaction
 from apps.models.user import User
 from apps.models.wallet import Wallet
-from apps.schemas.transaction import DepositMoneySchema, WithdrawnMoneySchema
+from apps.schemas.transaction import (
+    DepositMoneySchema,
+    SendMoneySchema,
+    WithdrawnMoneySchema,
+)
 
 CALLBACK_MOCK = ["success", "failed"]
 
@@ -43,16 +48,66 @@ def get_user_wallet(user_id: UUID, db: Session):
     if not user_wallet:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="You don't have any wallet associated with you account. Please create an wallet account before proceeding.",
+            detail="You don't have any wallet associated with your account. Please create an wallet account before proceeding.",
         )
 
     elif not user_wallet.is_active:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Your wallet account not activated. Please contact admin to active your account.",
+            detail="Your wallet account not activated. Can't proceed further.",
         )
 
     return user_wallet
+
+
+def check_receiver_user_exist(receiver: str, db: Session):
+    user: User | None = db.scalars(
+        select(User).filter(User.phone_number == receiver)
+    ).one_or_none()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Receiver don't have associate account with us. Can't send money.",
+        )
+
+
+def is_amount_valid(amount: Decimal):
+    if amount <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_406_NOT_ACCEPTABLE,
+            detail="Deposit amount cannot be 0 or negative value",
+        )
+
+
+def check_sufficent_balance(amount: Decimal, user_balance: Decimal):
+    if amount > user_balance:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Insufficent balance.",
+        )
+
+
+def get_receiver_wallet(receiver: str, db: Session):
+
+    receiver_wallet: Wallet | None = db.scalar(
+        select(Wallet)
+        .join(User, Wallet.user_id == User.id)
+        .where(User.phone_number == receiver)
+    )
+    if not receiver_wallet:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Receiver don't have any wallet associated with his account. Can't send money to user with no wallet.",
+        )
+
+    if not receiver_wallet.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Receiver wallet account not active can't receive amount.",
+        )
+
+    return receiver_wallet
 
 
 @router.post("/deposit")
@@ -61,14 +116,9 @@ def deposit(
     db: Annotated[Session, Depends(get_db)],
     is_user: Annotated[User, Depends(get_current_user)],
 ):
-    ## TODO: add idempotency for duplicate transaction call 
+    ## TODO: add idempotency for duplicate transaction call
+    is_amount_valid(data.amount)
     user_wallet: Wallet = get_user_wallet(is_user.id, db)
-
-    if data.amount <= 0:
-        raise HTTPException(
-            status_code=status.HTTP_406_NOT_ACCEPTABLE,
-            detail="Deposit amount cannot be 0 or negative value",
-        )
 
     reference_id = generate_reference_id()
 
@@ -105,19 +155,9 @@ def withdraw(
     db: Annotated[Session, Depends(get_db)],
     is_user: Annotated[User, Depends(get_current_user)],
 ):
+    is_amount_valid(data.amount)
     user_wallet = get_user_wallet(is_user.id, db)
-
-    if data.amount <= 0:
-        raise HTTPException(
-            status_code=status.HTTP_406_NOT_ACCEPTABLE,
-            detail="Deposit amount cannot be 0 or negative value",
-        )
-
-    if data.amount > user_wallet.balance:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail="Insufficent balance.",
-        )
+    check_sufficent_balance(data.amount, user_wallet.balance)
 
     reference_number = generate_reference_id()
     transaction = Transaction(
@@ -141,7 +181,7 @@ def withdraw(
         db.commit()
 
         return {
-            "msg": f"The amount of {user_wallet.currency} {data.amount} withdrawn successfully. Available Balance {user_wallet.currency} {user_wallet.balance}"
+            "msg": f"The amount of {user_wallet.currency} {data.amount} withdrawn successfully."
         }
 
     else:
@@ -154,6 +194,19 @@ def withdraw(
 
 @router.post("/send-money")
 def send_money(
+    data: SendMoneySchema,
     db: Annotated[Session, Depends(get_db)],
     is_user: Annotated[User, Depends(get_current_user)],
-): ...
+):
+    is_amount_valid(data.amount)
+    check_receiver_user_exist(data.receiver_phone_number, db)
+    receiver_wallet = get_receiver_wallet(data.receiver_phone_number, db)
+    sender_wallet = get_user_wallet(is_user.id, db)
+    check_sufficent_balance(data.amount, sender_wallet.balance)
+
+    sender_wallet.balance -= data.amount
+    receiver_wallet.balance += data.amount
+
+    return {
+        "msg": f"Amount of {sender_wallet.currency} {data.amount} send successfully to {receiver_wallet.user.name}."
+    }

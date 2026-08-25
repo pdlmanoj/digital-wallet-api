@@ -28,8 +28,24 @@ class WithdrawnMoneySchema(InitiateTransactionSchema):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "amount": "200.00",
+                "amount": "100.00",
                 "type": "withdraw",
+            }
+        }
+    )
+
+
+class SendMoneySchema(Schema):
+    sender_phone_number: str
+    receiver_phone_number: str
+    amount: Decimal
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "sender_phone_number": "98576234569",
+                "receiver_phone_number": "9857698786",
+                "amount": "100.00",
             }
         }
     )
