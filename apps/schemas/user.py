@@ -2,7 +2,7 @@ from datetime import date
 from typing import Literal
 from uuid import UUID
 
-from pydantic import ConfigDict, EmailStr
+from pydantic import ConfigDict, EmailStr, field_validator
 
 from apps.core.pydantic import Schema
 
@@ -14,6 +14,13 @@ class UserCreateSchema(Schema):
     phone_number: str
     gender: str
     date_of_birth: date
+
+    @field_validator("phone_number")
+    @classmethod
+    def validate_phone_number(cls, v):
+        if len(v) != 10:
+            raise ValueError("Invalid phone number.")
+        return v
 
     model_config = ConfigDict(
         json_schema_extra={
