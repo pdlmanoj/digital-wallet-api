@@ -22,6 +22,12 @@ class UserCreateSchema(Schema):
             raise ValueError("Invalid phone number.")
         return v
 
+    @field_validator("date_of_birth")
+    @classmethod
+    def validate_dob(cls, v):
+        if v > date.today():
+            raise ValueError("Date of birth cannot be in the future.")
+
     model_config = ConfigDict(
         json_schema_extra={
             "example": {

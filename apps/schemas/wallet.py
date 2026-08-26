@@ -1,17 +1,25 @@
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import ConfigDict
+from pydantic import ConfigDict, field_validator
 
 from apps.core.pydantic import Schema
 
 
 class CreateWalletFormSchema(Schema):
     currency: str | None
-    balance: Decimal
+    amount: Decimal
+
+    @field_validator("amount")
+    @classmethod
+    def validate_amount(cls, v):
+        if v < Decimal(1):
+            raise ValueError("Invalid amount.")
+
+        return v
 
     model_config = ConfigDict(
-        json_schema_extra={"example": {"balance": "100.00", "currency": "NPR"}}
+        json_schema_extra={"example": {"amount": "100.00", "currency": "NPR"}}
     )
 
 

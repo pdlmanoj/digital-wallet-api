@@ -72,14 +72,6 @@ def check_receiver_user_exist(receiver: str, db: Session):
         )
 
 
-def is_amount_valid(amount: Decimal):
-    if amount <= 0:
-        raise HTTPException(
-            status_code=status.HTTP_406_NOT_ACCEPTABLE,
-            detail="Deposit amount cannot be 0 or negative value",
-        )
-
-
 def check_sufficent_balance(amount: Decimal, user_balance: Decimal):
     if amount > user_balance:
         raise HTTPException(
@@ -117,7 +109,6 @@ def deposit(
     is_user: Annotated[User, Depends(get_current_user)],
 ):
     ## TODO: add idempotency for duplicate transaction call
-    is_amount_valid(data.amount)
     user_wallet: Wallet = get_user_wallet(is_user.id, db)
 
     reference_id = generate_reference_id()
@@ -155,7 +146,6 @@ def withdraw(
     db: Annotated[Session, Depends(get_db)],
     is_user: Annotated[User, Depends(get_current_user)],
 ):
-    is_amount_valid(data.amount)
     user_wallet = get_user_wallet(is_user.id, db)
     check_sufficent_balance(data.amount, user_wallet.balance)
 
@@ -198,7 +188,6 @@ def send_money(
     db: Annotated[Session, Depends(get_db)],
     is_user: Annotated[User, Depends(get_current_user)],
 ):
-    is_amount_valid(data.amount)
     check_receiver_user_exist(data.receiver_phone_number, db)
     receiver_wallet = get_receiver_wallet(data.receiver_phone_number, db)
     sender_wallet = get_user_wallet(is_user.id, db)
