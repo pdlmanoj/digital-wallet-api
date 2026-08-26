@@ -10,6 +10,14 @@ class InitiateTransactionSchema(Schema):
     type: Literal["deposit", "withdraw"]
     amount: Decimal
 
+    @field_validator("amount")
+    @classmethod
+    def validate_amount(cls, v):
+        if v < Decimal(1):
+            raise ValueError("Invalid amount.")
+
+        return v
+
 
 class DepositMoneySchema(InitiateTransactionSchema):
     currency: str = "NPR"
@@ -44,6 +52,14 @@ class SendMoneySchema(Schema):
     def validate_phone_number(cls, v):
         if len(v) != 10:
             raise ValueError("Invalid phone number")
+
+        return v
+
+    @field_validator("amount")
+    @classmethod
+    def validate_amount(cls, v):
+        if v < Decimal(1):
+            raise ValueError("Invalid amount.")
 
         return v
 

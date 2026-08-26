@@ -36,11 +36,6 @@ def create(
     db: Annotated[Session, Depends(get_db)],
     is_user: Annotated[User, Depends(get_current_user)],
 ):
-    if wallet_form.balance <= 0:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Balance cannot be negative or 0",
-        )
 
     user_wallet = db.scalar(select(Wallet).where(Wallet.user_id == is_user.id))
 
@@ -53,14 +48,14 @@ def create(
     wallet = Wallet(
         user_id=is_user.id,
         currency=wallet_form.currency if wallet_form.currency else "NPR",
-        balance=wallet_form.balance,
+        balance=wallet_form.amount,
     )
 
     db.add(wallet)
     db.commit()
 
     return {
-        "msg": f"Wallet created successfully with initial balance of {wallet_form.currency} {wallet_form.balance}."
+        "msg": f"Wallet created successfully with initial balance of {wallet_form.currency} {wallet_form.amount}."
     }
 
 
