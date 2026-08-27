@@ -27,6 +27,7 @@ class UserCreateSchema(Schema):
     def validate_dob(cls, v):
         if v > date.today():
             raise ValueError("Date of birth cannot be in the future.")
+        return v
 
     model_config = ConfigDict(
         json_schema_extra={
