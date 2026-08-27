@@ -23,11 +23,6 @@ app.include_router(transaction_router)
 # TODO: add CROS origin protection
 
 
-@app.get("/")
-def test():
-    return {"msg": "Hello World"}
-
-
 @app.get("/health-check")
 def check():
     return {
