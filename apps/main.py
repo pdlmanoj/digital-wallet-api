@@ -10,8 +10,17 @@ from apps.core.config import settings
 
 # Base.metadata.create_all(bind=engine)
 
+swagger_ui_parameters = {
+    "defaultModelsExpandDepth": -1,  # Disable Schemas shown in Swagger
+    "displayRequestDuration": True,  # display execution time next to response status code
+    "persistAuthorization": True,  # keeps logged even after brower reload
+}
+
 app = FastAPI(
-    title=settings.app_name, version=settings.app_version, debug=settings.debug
+    title=settings.app_name,
+    version=settings.app_version,
+    debug=settings.debug,
+    swagger_ui_parameters=swagger_ui_parameters,
 )
 
 app.include_router(user_router)
