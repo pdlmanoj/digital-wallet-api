@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from fastapi import FastAPI
 
 from apps.api.auth import router as auth_router
@@ -29,6 +27,4 @@ def check():
         "msg": "Success",
         "app": settings.app_name,
         "debug": settings.debug,
-        "db_url": settings.database_url.unicode_string(),
-        "base": Path(__file__).parent.parent,
     }
