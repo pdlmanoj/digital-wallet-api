@@ -1,7 +1,7 @@
 from decimal import Decimal
 from typing import Literal
 
-from pydantic import ConfigDict, field_validator
+from pydantic import ConfigDict, Field, field_validator
 
 from apps.core.pydantic import Schema
 
@@ -44,7 +44,7 @@ class WithdrawnMoneySchema(InitiateTransactionSchema):
 
 
 class SendMoneySchema(Schema):
-    receiver_phone_number: str
+    receiver_phone_number: str = Field(min_length=10, max_length=10)
     amount: Decimal
 
     @field_validator("receiver_phone_number")

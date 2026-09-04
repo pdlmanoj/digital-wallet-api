@@ -2,7 +2,7 @@ from datetime import date
 from typing import Literal
 from uuid import UUID
 
-from sqlalchemy import false
+from sqlalchemy import String, false
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid_extensions import uuid7
 
@@ -16,7 +16,7 @@ class User(Base):
     email: Mapped[str] = mapped_column(unique=True)
     password: Mapped[str]
     old_password: Mapped[str | None]
-    phone_number: Mapped[str]
+    phone_number: Mapped[str] = mapped_column(String(10), unique=True)
     gender: Mapped[Literal["male", "female", "other"]]
     date_of_birth: Mapped[date]
     status: Mapped[Literal["active", "inactive", "password_lock"]] = mapped_column(

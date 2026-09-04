@@ -1,12 +1,12 @@
-from pathlib import Path
-
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 
 from apps.api.auth import router as auth_router
 from apps.api.transaction import router as transaction_router
 from apps.api.user import router as user_router
 from apps.api.wallet import router as wallet_router
 from apps.core.config import settings
+from apps.core.redis import redis_cache
+from apps.rate_limit import RATE_LIMIT_KEY, Ratelimit
 
 # Base.metadata.create_all(bind=engine)
 
@@ -29,15 +29,17 @@ app.include_router(wallet_router)
 app.include_router(transaction_router)
 
 
-# TODO: add CROS origin protection
-
-
 @app.get("/health-check")
-def check():
+def check(request: Request):
+
+    client_ip = request.client.host
+    limit = Ratelimit(client_ip)
+    limit.check_limit_redis()
     return {
         "msg": "Success",
         "app": settings.app_name,
         "debug": settings.debug,
-        "db_url": settings.database_url.unicode_string(),
-        "base": Path(__file__).parent.parent,
+        "request_count": int(
+            redis_cache.get(RATE_LIMIT_KEY.format(client_ip=client_ip))
+        ),
     }

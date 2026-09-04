@@ -2,7 +2,7 @@ from datetime import date
 from typing import Literal
 from uuid import UUID
 
-from pydantic import ConfigDict, EmailStr, field_validator
+from pydantic import ConfigDict, EmailStr, Field, field_validator
 
 from apps.core.pydantic import Schema
 
@@ -11,7 +11,7 @@ class UserCreateSchema(Schema):
     name: str
     email: EmailStr
     password: str
-    phone_number: str
+    phone_number: str = Field(min_length=10, max_length=10)
     gender: str
     date_of_birth: date
 
@@ -27,6 +27,14 @@ class UserCreateSchema(Schema):
     def validate_dob(cls, v):
         if v > date.today():
             raise ValueError("Date of birth cannot be in the future.")
+        return v
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v):
+        if len(v) < 8:
+            raise ValueError("Password length must be greater than 8 characters.")
+
         return v
 
     model_config = ConfigDict(

@@ -188,9 +188,9 @@ def send_money(
     db: Annotated[Session, Depends(get_db)],
     is_user: Annotated[User, Depends(get_current_user)],
 ):
+    sender_wallet = get_user_wallet(is_user.id, db)
     check_receiver_user_exist(data.receiver_phone_number, db)
     receiver_wallet = get_receiver_wallet(data.receiver_phone_number, db)
-    sender_wallet = get_user_wallet(is_user.id, db)
     check_sufficent_balance(data.amount, sender_wallet.balance)
 
     sender_wallet.balance -= data.amount
