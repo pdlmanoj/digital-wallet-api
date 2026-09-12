@@ -7,8 +7,7 @@ from sqlalchemy.orm import Session
 
 from apps.core.security import get_admin, get_current_user
 from apps.db.session import get_db
-from apps.models.user import User
-from apps.models.wallet import Wallet
+from apps.models import User, Wallet
 from apps.schemas.wallet import (
     AvailableBalanceReadSchema,
     CreateWalletFormSchema,
@@ -25,7 +24,10 @@ def get_user_wallet(id: UUID, db: Session):
     if not user_wallet:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No wallet registrated for this user.",
+            detail={
+                "error_type": "wallet.not_found",
+                "msg": "No wallet registrated for this user.",
+            },
         )
     return user_wallet
 
@@ -42,7 +44,10 @@ def create(
     if user_wallet:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="It seems you already have a wallet account with us. You can't recreate new wallet again.",
+            detail={
+                "error_type": "wallet.already_exists",
+                "msg": "It seems you already have a wallet account with us. You can't recreate new wallet again.",
+            },
         )
 
     wallet = Wallet(
@@ -94,7 +99,11 @@ def activate(
         return {"msg": "User wallet activated successfully."}
     else:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Wallet already activated."
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error_type": "wallet.already_activated",
+                "msg": "Wallet already activated.",
+            },
         )
 
 
@@ -109,7 +118,10 @@ def deactivate(
     if not user_wallet:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No wallet registrated for this user.",
+            detail={
+                "error_type": "wallet.not_found",
+                "msg": "No wallet registrated for this user.",
+            },
         )
     if user_wallet.is_active:
         user_wallet.is_active = False
@@ -118,7 +130,10 @@ def deactivate(
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Wallet already deactivated.",
+            detail={
+                "error_type": "wallet.already_deactivated",
+                "msg": "Wallet already deactivated.",
+            },
         )
 
 

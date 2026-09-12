@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 
 from apps.core.config import settings
 from apps.db.session import get_db
-from apps.models.user import User
+from apps.models import User
 
 ACCESS_TOKEN_SECRET_KEY = settings.access_token_secret_key
 ACCESS_TOKEN_EXPIRE_IN = settings.access_token_expire_time

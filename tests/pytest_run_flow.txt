@@ -1,0 +1,40 @@
+
+            pytest
+            │
+            │ needs "client"
+            ▼
+            client fixture
+            │
+            ├── receives db fixture
+            │
+            ├── creates override_get_db()
+            │
+            ├── tells FastAPI:
+            │      get_db → override_get_db
+            │
+            └── creates TestClient(app)
+                        │
+                        ▼
+                    yield test_client
+                        │
+                        ▼
+                test_signup(client)
+                        │
+                        │ client.post(...)
+                        ▼
+                    FastAPI
+                        │
+                        ▼
+                /signup endpoint
+                        │
+                        ▼
+                Depends(get_db)
+                        │
+                        ▼
+                override_get_db()
+                        │
+                        ▼
+                    test db
+                        │
+                        ▼
+                test PostgreSQL

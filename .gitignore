@@ -8,3 +8,5 @@ env
 .opencode
 *.md
 !README.md
+.pytest_cache
+.ruff_cache

@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import UTC, date, datetime
 from typing import Literal
 from uuid import UUID
 
@@ -25,7 +25,7 @@ class UserCreateSchema(Schema):
     @field_validator("date_of_birth")
     @classmethod
     def validate_dob(cls, v):
-        if v > date.today():
+        if v > datetime.now(tz=UTC).date():
             raise ValueError("Date of birth cannot be in the future.")
         return v
 

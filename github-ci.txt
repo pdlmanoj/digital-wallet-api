@@ -1,0 +1,18 @@
+                    Git Push
+                       │
+                       ▼
+                GitHub Actions
+                       │
+             ┌─────────┴─────────┐
+             │                   │
+          Ruff                Pytest
+                                 │
+                         ┌───────┴───────┐
+                         │               │
+                      Unit tests     Integration/API
+                                         │
+                                         ▼
+                                  Test PostgreSQL
+                                         │
+                                         ▼
+                                      PASS

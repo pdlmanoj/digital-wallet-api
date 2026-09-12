@@ -1,0 +1,50 @@
+name: PR check
+
+on:
+  pull_request:
+    branches:
+    - release/prod
+
+jobs:
+  pr-check:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: wallet-test
+
+        ports:
+        - 5432:5432
+        options: >-
+          --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      TEST_DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/wallet-test
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v6
+
+    - name: Install uv
+      uses: astral-sh/uv@v6
+      with:
+        python-version: 3.12
+        enable-cache: true
+
+    - name: Set up Python
+      run: uv python install 3.12
+
+    - name: Install dependencies
+      run: uv sync
+
+    - name: Ruff Check
+      run: uv run ruff check .
+
+    - name: Ruff Format Check
+      run: uv run ruff format --check .
+
+    - name: Run Tests
+      run: uv run pytest --ma
