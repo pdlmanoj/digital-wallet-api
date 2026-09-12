@@ -22,7 +22,7 @@ jobs:
         options: >-
           --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
     env:
-      TEST_DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/wallet-test
+      TEST_DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/wallet-test
 
     steps:
     - name: Checkout Code
@@ -40,6 +40,9 @@ jobs:
     - name: Install dependencies
       run: uv sync
 
+    - name: Create env file
+      run: cp .env.sample .env
+
     - name: Ruff Check
       run: uv run ruff check .
 
@@ -47,4 +50,4 @@ jobs:
       run: uv run ruff format --check .
 
     - name: Run Tests
-      run: uv run pytest --ma
+      run: uv run pytest
