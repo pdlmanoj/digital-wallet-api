@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from apps.core.security import create_token, get_current_user, validate_refresh_token
 from apps.db.session import get_db
-from apps.models.user import User
+from apps.models import User
 from apps.repositories.db import authenticate_user
 from apps.utils.utils import record_success_password
 
@@ -23,13 +23,19 @@ def token(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid username or password",
+            detail={
+                "error_type": "auth.invalid_credentials",
+                "msg": "Invalid username or password",
+            },
         )
 
     if user.status == "inactive":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Sorry, your account status is {user.status}. Please contact admin to reactivate you account.",
+            detail={
+                "error_type": "auth.inactive_user",
+                "msg": f"Sorry, your account status is {user.status}. Please contact admin to reactivate you account.",
+            },
         )
     else:
         record_success_password(user, db)

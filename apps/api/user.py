@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from apps.core.security import get_admin, get_current_user, password_security
 from apps.db.session import get_db
-from apps.models.user import User
+from apps.models import User
 from apps.schemas.user import UserCreateSchema, UserResponseSchema
 from apps.utils.Email.email import email as mileroo_email
 from apps.utils.utils import validate_otp
@@ -16,7 +16,9 @@ from apps.utils.utils import validate_otp
 router = APIRouter(prefix="/user", tags=["User"])
 
 
-@router.post("/signup", response_model=UserResponseSchema)
+@router.post(
+    "/signup", response_model=UserResponseSchema, status_code=status.HTTP_201_CREATED
+)
 def create_user(user: UserCreateSchema, db: Annotated[Session, Depends(get_db)]):
 
     query = db.scalar(
@@ -28,7 +30,10 @@ def create_user(user: UserCreateSchema, db: Annotated[Session, Depends(get_db)])
     if query:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="It seem you already have an account with us. Please proceed with login.",
+            detail={
+                "error_type": "create_user.duplicate_user",
+                "msg": "It seem you already have an account with us. Please proceed with login.",
+            },
         )
 
     hash_password = password_security.hash_password(user.password)
@@ -57,7 +62,7 @@ def get_users(
     return db.execute(select(User)).scalars().all()
 
 
-@router.get("/user/{id}", response_model=UserResponseSchema)
+@router.get("/{id}", response_model=UserResponseSchema)
 def get_user(id: UUID, db: Annotated[Session, Depends(get_db)]):
 
     smth = select(User).filter_by(id=id)
@@ -66,21 +71,25 @@ def get_user(id: UUID, db: Annotated[Session, Depends(get_db)]):
 
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"error_type": "get_user.user_not_found", "msg": "User not found"},
         )
 
     return UserResponseSchema.model_validate(user)
 
 
 @router.post("/send-otp")
-def send_email(email: Annotated[EmailStr, Body(embed=True)]):
+def send_otp(email: Annotated[EmailStr, Body(embed=True)]):
 
     response = mileroo_email.send_email(email=email)
 
     if response.json().get("success") != True:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email OTP send failed, try again later",
+            detail={
+                "error_type": "send_otp.send_failed",
+                "msg": "Email OTP send failed, try again later",
+            },
         )
 
     return {"msg": "OTP send successfully"}
@@ -93,7 +102,11 @@ def verify_otp(
     is_valid = validate_otp(email, otp)
     if not is_valid:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid OTP or Expired"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error_type": "verify_otp.invalid_otp",
+                "msg": "Invalid OTP or Expired",
+            },
         )
 
     return {"msg": "OTP verified successfully"}
@@ -107,7 +120,10 @@ def resend_otp(email: Annotated[EmailStr, Body(embed=True)]):
     if response.json().get("success") != True:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="OTP resend failed, try again later",
+            detail={
+                "error_type": "resend_otp.resend_failed",
+                "msg": "OTP resend failed, try again later",
+            },
         )
 
     return {"msg": "Resend OTP successfully"}
@@ -123,7 +139,10 @@ def change_password(
     if len(new_password) < 8:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Password must be greater than 8 characters.",
+            detail={
+                "error_type": "change_password.password_too_short",
+                "msg": "Password must be greater than 8 characters.",
+            },
         )
 
     is_valid = password_security.verify_password(current_password, is_user.password)
@@ -131,13 +150,19 @@ def change_password(
     if not is_valid:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Your current password doesn't match.",
+            detail={
+                "error_type": "change_password.invalid_current_password",
+                "msg": "Your current password doesn't match.",
+            },
         )
 
     if current_password == new_password:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="You cannot set current password as new password",
+            detail={
+                "error_type": "change_password.same_as_current",
+                "msg": "You cannot set current password as new password",
+            },
         )
 
     hash_password = password_security.hash_password(new_password)
@@ -147,7 +172,10 @@ def change_password(
     ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="You new password cannot be same as previous password. Choose different password.",
+            detail={
+                "error_type": "change_password.same_as_old",
+                "msg": "You new password cannot be same as previous password. Choose different password.",
+            },
         )
 
     is_user.old_password = is_user.password

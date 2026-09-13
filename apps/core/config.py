@@ -34,4 +34,16 @@ class RedisSettings(BaseSettings):
         env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
     )
 
+
 redis_settings = RedisSettings()  # type: ignore
+
+
+class TestSettings(BaseSettings):
+    test_database_url: PostgresDsn
+
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
+    )
+
+
+test_settings = TestSettings()  # type: ignore

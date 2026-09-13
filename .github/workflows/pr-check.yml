@@ -1,0 +1,70 @@
+name: PR check
+
+on:
+  pull_request:
+    branches:
+    - release/prod
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  pr-check:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: wallet-test
+
+        ports:
+        - 5432:5432
+        options: >-
+          --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+        - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      TEST_DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/wallet-test
+      REDIS_URL: redis://localhost:6379/0
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v6
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        python-version: 3.12
+        enable-cache: true
+
+    - name: Set up Python
+      run: uv python install 3.12
+
+    - name: Install dependencies
+      run: uv sync
+
+    - name: Create env file
+      run: cp .env.sample .env
+
+    - name: Ruff Check
+      run: uv run ruff check .
+
+    - name: Ruff Format Check
+      run: uv run ruff format --check .
+
+    - name: Run Tests
+      run: uv run pytest --cov=. --cov-report=xml
+
+    - name: Get Coverage Report
+      uses: orgoro/coverage@v3.2
+      with:
+        coverageFile: coverage.xml
+        token: ${{ secrets.GITHUB_TOKEN }}

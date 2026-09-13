@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from apps.core.security import password_security
-from apps.models.user import User
+from apps.models import User
 from apps.utils.utils import record_failed_password
 
 

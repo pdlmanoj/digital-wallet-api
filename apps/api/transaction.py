@@ -9,9 +9,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from apps.core.security import get_current_user, get_db
+from apps.models import User, Wallet
 from apps.models.transaction import Transaction
-from apps.models.user import User
-from apps.models.wallet import Wallet
 from apps.schemas.transaction import (
     DepositMoneySchema,
     SendMoneySchema,
@@ -34,7 +33,11 @@ def get_transaction_by_ref_id(ref_id: str, db: Session):
 
     if not transaction:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="No transaction found"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error_type": "transaction.not_found",
+                "msg": "No transaction found",
+            },
         )
 
     return transaction
@@ -48,13 +51,19 @@ def get_user_wallet(user_id: UUID, db: Session):
     if not user_wallet:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="You don't have any wallet associated with your account. Please create an wallet account before proceeding.",
+            detail={
+                "error_type": "transaction.wallet_not_found",
+                "msg": "You don't have any wallet associated with your account. Please create an wallet account before proceeding.",
+            },
         )
 
     elif not user_wallet.is_active:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Your wallet account not activated. Can't proceed further.",
+            detail={
+                "error_type": "transaction.wallet_not_active",
+                "msg": "Your wallet account not activated. Can't proceed further.",
+            },
         )
 
     return user_wallet
@@ -68,7 +77,10 @@ def check_receiver_user_exist(receiver: str, db: Session):
     if not user:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail="Receiver don't have associate account with us. Can't send money.",
+            detail={
+                "error_type": "transaction.receiver_not_found",
+                "msg": "Receiver don't have associate account with us. Can't send money.",
+            },
         )
 
 
@@ -76,7 +88,10 @@ def check_sufficent_balance(amount: Decimal, user_balance: Decimal):
     if amount > user_balance:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail="Insufficent balance.",
+            detail={
+                "error_type": "transaction.insufficient_balance",
+                "msg": "Insufficient balance.",
+            },
         )
 
 
@@ -90,13 +105,19 @@ def get_receiver_wallet(receiver: str, db: Session):
     if not receiver_wallet:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Receiver don't have any wallet associated with his account. Can't send money to user with no wallet.",
+            detail={
+                "error_type": "transaction.receiver_wallet_not_found",
+                "msg": "Receiver don't have any wallet associated with his account. Can't send money to user with no wallet.",
+            },
         )
 
     if not receiver_wallet.is_active:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Receiver wallet account not active can't receive amount.",
+            detail={
+                "error_type": "transaction.receiver_wallet_not_active",
+                "msg": "Receiver wallet account not active can't receive amount.",
+            },
         )
 
     return receiver_wallet
