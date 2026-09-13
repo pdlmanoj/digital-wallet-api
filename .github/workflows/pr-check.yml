@@ -5,6 +5,10 @@ on:
     branches:
     - release/prod
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   pr-check:
     runs-on: ubuntu-latest
@@ -58,3 +62,9 @@ jobs:
 
     - name: Run Tests
       run: uv run pytest --cov=. --cov-report=xml
+
+    - name: Get Coverage Report
+      uses: orgoro/coverage@v3.2
+      with:
+        coverageFile: coverage.xml
+        token: ${{ secrets.GITHUB_TOKEN }}
