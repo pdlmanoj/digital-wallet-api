@@ -61,7 +61,7 @@ jobs:
       run: uv run ruff format --check .
 
     - name: Run Tests
-      run: uv run pytest --cov=. --cov-report=xml
+      run: uv run pytest --cov=. --cov-report=term-missing --cov-report=xml
 
     - name: Get Coverage Report
       uses: orgoro/coverage@v3.2
