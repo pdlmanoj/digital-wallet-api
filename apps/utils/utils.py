@@ -58,4 +58,3 @@ def generate_random_password(length: int = 12) -> str:
     password = "".join(random.choices(combined, k=length))
 
     return password
-

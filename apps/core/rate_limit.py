@@ -11,6 +11,7 @@ limiter = Limiter(
     storage_uri=redis_settings.redis_url,
 )
 
+
 def customer_rate_limit_exception_handler(request: Request, exc: RateLimitExceeded):
     exc.detail = "Too many requests. Please try again later."
     return _rate_limit_exceeded_handler(request, exc)
