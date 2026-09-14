@@ -3,7 +3,10 @@ from datetime import UTC, datetime, timedelta
 from faker import Faker
 
 from apps.core.config import settings
+from apps.core.rate_limit import limiter
 from tests.utils import mock_otp
+
+limiter.enabled = False  # Disable rate limiting for tests
 
 PASSWORD_HASH = "$2a$12$x54mYU7XnxeqFlWDmVDGoep.ebTSNze/0gn7i9f2DIP2z/yKiEKvS"
 password = "my@password"
@@ -51,7 +54,6 @@ def test_duplicate_signup(client):
 
 def test_user_not_found(client):
     response = client.get(f"/user/{fake.uuid4()}")
-
     assert response.status_code == 404
     assert response.json()["detail"]["error_type"] == "get_user.user_not_found"
 

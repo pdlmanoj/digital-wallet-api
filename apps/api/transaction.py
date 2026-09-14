@@ -28,9 +28,9 @@ def generate_reference_id():
 
 
 def get_transaction_by_ref_id(ref_id: str, db: Session):
-    transaction = db.execute(
+    transaction = db.scalar(
         select(Transaction).where(Transaction.reference_id == ref_id)
-    ).scalar_one_or_none()
+    )
 
     if not transaction:
         raise HTTPException(
@@ -45,9 +45,7 @@ def get_transaction_by_ref_id(ref_id: str, db: Session):
 
 
 def get_user_wallet(user_id: UUID, db: Session):
-    user_wallet = db.scalars(
-        select(Wallet).where(Wallet.user_id == user_id)
-    ).one_or_none()
+    user_wallet = db.scalar(select(Wallet).where(Wallet.user_id == user_id))
 
     if not user_wallet:
         raise HTTPException(
@@ -71,9 +69,7 @@ def get_user_wallet(user_id: UUID, db: Session):
 
 
 def check_receiver_user_exist(receiver: str, db: Session):
-    user: User | None = db.scalars(
-        select(User).filter(User.phone_number == receiver)
-    ).one_or_none()
+    user: User | None = db.scalar(select(User).filter(User.phone_number == receiver))
 
     if not user:
         raise HTTPException(

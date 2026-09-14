@@ -19,8 +19,7 @@ router = APIRouter(prefix="/wallet", tags=["Wallet"])
 
 
 def get_user_wallet(id: UUID, db: Session):
-    smth = select(Wallet).where(Wallet.user_id == id)
-    user_wallet = db.scalars(smth).one_or_none()
+    user_wallet = db.scalar(select(Wallet).where(Wallet.user_id == id))
 
     if not user_wallet:
         raise HTTPException(

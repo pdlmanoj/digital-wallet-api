@@ -69,11 +69,10 @@ def get_users(
     return db.execute(select(User)).scalars().all()
 
 
-@router.get("/user/{id}", response_model=UserResponseSchema)
+@router.get("/{id}", response_model=UserResponseSchema)
 @limiter.limit("20/minute")
 def get_user(request: Request, id: UUID, db: Annotated[Session, Depends(get_db)]):
-    smth = select(User).filter_by(id=id)
-    user = db.execute(smth).scalars().first()
+    user = db.scalar(select(User).where(User.id == id))
 
     if not user:
         raise HTTPException(
