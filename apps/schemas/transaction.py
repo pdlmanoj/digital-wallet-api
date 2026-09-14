@@ -18,6 +18,15 @@ class InitiateTransactionSchema(Schema):
 
         return v
 
+    @field_validator("type")
+    @classmethod
+    def validate_type(cls, v):
+        if v not in ["deposit", "withdraw"]:
+            raise ValueError(
+                "Invalid transaction type. Must be 'deposit' or 'withdraw'."
+            )
+        return v
+
 
 class DepositMoneySchema(InitiateTransactionSchema):
     currency: str = "NPR"
@@ -30,6 +39,14 @@ class DepositMoneySchema(InitiateTransactionSchema):
             }
         }
     )
+
+    @field_validator("currency")
+    @classmethod
+    def validate_currency(cls, v):
+        if v and v not in ["NPR"]:
+            raise ValueError("Invalid currency. Must be 'NPR'.")
+
+        return v
 
 
 class WithdrawnMoneySchema(InitiateTransactionSchema):
@@ -51,7 +68,7 @@ class SendMoneySchema(Schema):
     @classmethod
     def validate_phone_number(cls, v):
         if len(v) != 10:
-            raise ValueError("Invalid phone number")
+            raise ValueError("Invalid phone number.")
 
         return v
 

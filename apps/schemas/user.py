@@ -25,6 +25,7 @@ class UserCreateSchema(Schema):
     def validate_gender(cls, v):
         if v not in ["male", "female", "other"]:
             raise ValueError("Invalid gender. Must be 'male', 'female', or 'other'.")
+        return v
 
     @field_validator("phone_number")
     @classmethod
