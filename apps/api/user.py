@@ -1,17 +1,19 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 from pydantic import EmailStr
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
+from apps.core.rate_limit import limiter
 from apps.core.security import get_admin, get_current_user, password_security
 from apps.db.session import get_db
 from apps.models import User
+from apps.repositories.db import is_user_exist
 from apps.schemas.user import UserCreateSchema, UserResponseSchema
 from apps.utils.Email.email import email as mileroo_email
-from apps.utils.utils import validate_otp
+from apps.utils.utils import generate_random_password, validate_otp
 
 router = APIRouter(prefix="/user", tags=["User"])
 
@@ -19,7 +21,10 @@ router = APIRouter(prefix="/user", tags=["User"])
 @router.post(
     "/signup", response_model=UserResponseSchema, status_code=status.HTTP_201_CREATED
 )
-def create_user(user: UserCreateSchema, db: Annotated[Session, Depends(get_db)]):
+@limiter.limit("5/minute")
+def create_user(
+    request: Request, user: UserCreateSchema, db: Annotated[Session, Depends(get_db)]
+):
 
     query = db.scalar(
         select(User).filter(
@@ -55,18 +60,19 @@ def create_user(user: UserCreateSchema, db: Annotated[Session, Depends(get_db)])
 
 
 @router.get("/users", response_model=list[UserResponseSchema])
+@limiter.limit("20/minute")
 def get_users(
+    request: Request,
     is_admin: Annotated[User, Depends(get_admin)],
     db: Annotated[Session, Depends(get_db)],
 ):
     return db.execute(select(User)).scalars().all()
 
 
-@router.get("/{id}", response_model=UserResponseSchema)
-def get_user(id: UUID, db: Annotated[Session, Depends(get_db)]):
-
+@router.get("/user/{id}", response_model=UserResponseSchema)
+@limiter.limit("20/minute")
+def get_user(request: Request, id: UUID, db: Annotated[Session, Depends(get_db)]):
     smth = select(User).filter_by(id=id)
-
     user = db.execute(smth).scalars().first()
 
     if not user:
@@ -79,7 +85,21 @@ def get_user(id: UUID, db: Annotated[Session, Depends(get_db)]):
 
 
 @router.post("/send-otp")
-def send_otp(email: Annotated[EmailStr, Body(embed=True)]):
+@limiter.limit("2/minute")
+def send_email(
+    request: Request,
+    email: Annotated[EmailStr, Body(embed=True)],
+    db: Annotated[Session, Depends(get_db)],
+):
+    user_exist = is_user_exist(email, db)
+    if user_exist:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error_type": "user.already_exists",
+                "msg": "It seems you already have an account with us. Please proceed with login.",
+            },
+        )
 
     response = mileroo_email.send_email(email=email)
 
@@ -96,8 +116,11 @@ def send_otp(email: Annotated[EmailStr, Body(embed=True)]):
 
 
 @router.post("/verify-otp")
+@limiter.limit("3/minute")
 def verify_otp(
-    email: Annotated[EmailStr, Body(embed=True)], otp: Annotated[str, Body(embed=True)]
+    request: Request,
+    email: Annotated[EmailStr, Body(embed=True)],
+    otp: Annotated[str, Body(embed=True)],
 ):
     is_valid = validate_otp(email, otp)
     if not is_valid:
@@ -113,8 +136,21 @@ def verify_otp(
 
 
 @router.post("/resend-otp")
-def resend_otp(email: Annotated[EmailStr, Body(embed=True)]):
-
+@limiter.limit("2/minute")
+def resend_otp(
+    request: Request,
+    email: Annotated[EmailStr, Body(embed=True)],
+    db: Annotated[Session, Depends(get_db)],
+):
+    user_exist = is_user_exist(email, db)
+    if user_exist:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error_type": "user.already_exists",
+                "msg": "It seems you already have an account with us. Please proceed with login.",
+            },
+        )
     response = mileroo_email.send_email(email=email)
 
     if response.json().get("success") != True:
@@ -130,7 +166,9 @@ def resend_otp(email: Annotated[EmailStr, Body(embed=True)]):
 
 
 @router.post("/change-password")
+@limiter.limit("3/minute")
 def change_password(
+    request: Request,
     current_password: Annotated[str, Body(embed=True)],
     new_password: Annotated[str, Body(embed=True)],
     db: Annotated[Session, Depends(get_db)],
@@ -184,3 +222,43 @@ def change_password(
     db.commit()
 
     return {"msg": "Password changed successfully"}
+
+
+@router.post("/forget-password")
+@limiter.limit("3/minute")
+def forget_password(
+    request: Request,
+    email: Annotated[EmailStr, Body(embed=True)],
+    db: Annotated[Session, Depends(get_db)],
+):
+    user = db.scalar(select(User).where(User.email == email))
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error_type": "user.not_found",
+                "msg": "User with this email not found.",
+            },
+        )
+
+    # send random password to user email and update the password in db
+    password = generate_random_password(length=12)
+
+    response = mileroo_email.send_email(
+        email, password=password, type="forgot_password"
+    )
+
+    if response.json().get("success") != True:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email send failed, try again later",
+        )
+
+    hash_password = password_security.hash_password(password)
+    db.add(user)
+    user.old_password = user.password
+    user.password = hash_password
+    db.commit()
+
+    return {"msg": "New password send to your email successfully."}

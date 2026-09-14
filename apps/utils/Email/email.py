@@ -1,7 +1,9 @@
+from typing import Literal
+
 import requests
 
 from apps.core.config import settings
-from apps.utils.Email.template import generate_email_template
+from apps.utils.Email.template import forget_password_template, signup_template
 from apps.utils.utils import EMAIL_VERIFICATION_OTP_EXPIRED_IN, generate_otp_and_save
 
 
@@ -18,7 +20,7 @@ class Email:
             "Content-Type": "application/json",
         }
 
-    def create_payload(self, email_to: str, email_template: str) -> dict:
+    def create_payload(self, email_to: str, email_template: str, subject: str) -> dict:
 
         return {
             "from": {
@@ -30,18 +32,34 @@ class Email:
                     "address": f"{email_to}",
                 },
             ],
-            "subject": "Email OTP Verification (Digtal Wallet API)",
+            "subject": subject,
             "html": f"{email_template}",
         }
 
-    def send_email(self, email: str):
+    def send_email(
+        self,
+        email: str,
+        password: str | None = None,
+        type: Literal["signup", "forgot_password"] = "signup",
+    ):
+        if type not in ["signup", "forgot_password"]:
+            raise ValueError(
+                "Invalid email type. Must be 'signup' or 'forgot_password'."
+            )
 
-        otp = generate_otp_and_save(email)
-        otp_exp_minute = EMAIL_VERIFICATION_OTP_EXPIRED_IN // 60
-        email_template = generate_email_template(otp, otp_exp_minute)
         headers = self.get_headers()
-        payload = self.create_payload(email, email_template)
 
+        if type == "signup":
+            otp = generate_otp_and_save(email)
+            otp_expire_in = EMAIL_VERIFICATION_OTP_EXPIRED_IN // 60
+            email_template = signup_template(otp, otp_expire_in)
+            subject = "Email OTP Verification (Digtal Wallet API)"
+
+        elif type == "forgot_password" and password is not None:
+            email_template = forget_password_template(password)
+            subject = "Forgot Password (Digtal Wallet API)"
+
+        payload = self.create_payload(email, email_template, subject)
         response = requests.post(
             f"{self.config.maileroo_base_url}/emails", json=payload, headers=headers
         )

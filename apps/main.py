@@ -1,14 +1,12 @@
 from fastapi import FastAPI, Request
+from slowapi.errors import RateLimitExceeded
 
 from apps.api.auth import router as auth_router
 from apps.api.transaction import router as transaction_router
 from apps.api.user import router as user_router
 from apps.api.wallet import router as wallet_router
 from apps.core.config import settings
-from apps.core.redis import redis_cache
-from apps.rate_limit import RATE_LIMIT_KEY, Ratelimit
-
-# Base.metadata.create_all(bind=engine)
+from apps.core.rate_limit import customer_rate_limit_exception_handler, limiter
 
 swagger_ui_parameters = {
     "defaultModelsExpandDepth": -1,  # Disable Schemas shown in Swagger
@@ -22,6 +20,8 @@ app = FastAPI(
     debug=settings.debug,
     swagger_ui_parameters=swagger_ui_parameters,
 )
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, customer_rate_limit_exception_handler)
 
 app.include_router(user_router)
 app.include_router(auth_router)
@@ -30,16 +30,9 @@ app.include_router(transaction_router)
 
 
 @app.get("/health-check")
-def check(request: Request):
-
-    client_ip = request.client.host
-    limit = Ratelimit(client_ip)
-    limit.check_limit_redis()
+def health_check(request: Request):
     return {
         "msg": "Success",
         "app": settings.app_name,
         "debug": settings.debug,
-        "request_count": int(
-            redis_cache.get(RATE_LIMIT_KEY.format(client_ip=client_ip))
-        ),
     }
