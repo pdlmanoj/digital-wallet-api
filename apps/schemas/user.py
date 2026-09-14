@@ -20,6 +20,11 @@ class UserCreateSchema(Schema):
     def normalize_name(cls, v):
         return v.strip()
 
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, v):
+        return v.strip().lower()
+
     @field_validator("gender")
     @classmethod
     def validate_gender(cls, v):
