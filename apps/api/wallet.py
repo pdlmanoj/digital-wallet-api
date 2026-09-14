@@ -1,10 +1,11 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from apps.core.rate_limit import limiter
 from apps.core.security import get_admin, get_current_user
 from apps.db.session import get_db
 from apps.models import User, Wallet
@@ -18,8 +19,7 @@ router = APIRouter(prefix="/wallet", tags=["Wallet"])
 
 
 def get_user_wallet(id: UUID, db: Session):
-    smth = select(Wallet).where(Wallet.user_id == id)
-    user_wallet = db.scalars(smth).one_or_none()
+    user_wallet = db.scalar(select(Wallet).where(Wallet.user_id == id))
 
     if not user_wallet:
         raise HTTPException(
@@ -33,7 +33,9 @@ def get_user_wallet(id: UUID, db: Session):
 
 
 @router.post("/create")
+@limiter.limit("5/minute")
 def create(
+    request: Request,
     wallet_form: CreateWalletFormSchema,
     db: Annotated[Session, Depends(get_db)],
     is_user: Annotated[User, Depends(get_current_user)],
@@ -65,7 +67,9 @@ def create(
 
 
 @router.get("/check-balance", response_model=AvailableBalanceReadSchema)
+@limiter.limit("20/minute")
 def check_balance(
+    request: Request,
     db: Annotated[Session, Depends(get_db)],
     is_user: Annotated[User, Depends(get_current_user)],
 ):
@@ -75,7 +79,9 @@ def check_balance(
 
 
 @router.get("/{id}", response_model=WalletListReadSchema)
+@limiter.limit("20/minute")
 def user_wallets(
+    request: Request,
     id: UUID,
     db: Annotated[Session, Depends(get_db)],
     is_admin: Annotated[User, Depends(get_admin)],
@@ -86,7 +92,9 @@ def user_wallets(
 
 
 @router.post("/activate/{id}")
+@limiter.limit("3/minute")
 def activate(
+    request: Request,
     id: UUID,
     db: Annotated[Session, Depends(get_db)],
     is_admin: Annotated[User, Depends(get_admin)],
@@ -108,7 +116,9 @@ def activate(
 
 
 @router.post("/deactivate/{id}")
+@limiter.limit("3/minute")
 def deactivate(
+    request: Request,
     id: UUID,
     db: Annotated[Session, Depends(get_db)],
     is_admin: Annotated[User, Depends(get_admin)],

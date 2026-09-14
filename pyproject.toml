@@ -19,6 +19,7 @@ dependencies = [
     "requests>=2.34.2",
     "requests-mock>=1.12.1",
     "ruff>=0.16.7",
+    "slowapi>=0.1.10",
     "sqlalchemy>=2.0.51",
     "uuid7>=0.1.0",
 ]

@@ -46,3 +46,15 @@ def record_success_password(user: User, db: Session):
     user.login_attempt = 0
     user.status = "active"
     db.commit()
+
+
+def generate_random_password(length: int = 12) -> str:
+    letters = string.ascii_letters
+    digits = string.digits
+    special_chars = "!#$%&&^()"
+
+    combined = letters + digits + special_chars
+
+    password = "".join(random.choices(combined, k=length))
+
+    return password

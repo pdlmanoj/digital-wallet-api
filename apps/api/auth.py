@@ -1,9 +1,10 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
+from apps.core.rate_limit import limiter
 from apps.core.security import create_token, get_current_user, validate_refresh_token
 from apps.db.session import get_db
 from apps.models import User
@@ -14,7 +15,9 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
 @router.post("/login")
+@limiter.limit("5/minute")
 def token(
+    request: Request,
     data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Annotated[Session, Depends(get_db)],
 ):
@@ -53,12 +56,17 @@ def token(
 
 
 @router.get("/me")
-def get_user_profile(current_user: Annotated[User, Depends(get_current_user)]):
+@limiter.limit("20/minute")
+def get_user_profile(
+    request: Request, current_user: Annotated[User, Depends(get_current_user)]
+):
     return {"msg": f"Hello, {current_user.name}"}
 
 
 @router.post("/refresh")
+@limiter.limit("5/minute")
 def refresh_token(
+    request: Request,
     refresh_token: Annotated[str, Body(embed=True)],
     db: Annotated[Session, Depends(get_db)],
 ):
