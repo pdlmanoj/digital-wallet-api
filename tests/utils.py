@@ -2,9 +2,9 @@ from typing import Literal
 
 from faker import Faker
 
-from apps.core.config import settings
+from apps.core.config import mailerro
 
-MAILEROO_BASE_URL = settings.maileroo_base_url
+MAILEROO_BASE_URL = mailerro.maileroo_base_url
 fake = Faker()
 
 
