@@ -15,6 +15,16 @@ class Settings(BaseSettings):
     access_token_expire_time: int = 10  # min
     refresh_token_secret_key: str
     refresh_token_expire_time: int = 1  # day
+
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
+    )
+
+
+settings = Settings()  # type: ignore
+
+
+class MailerroSettings(BaseSettings):
     maileroo_base_url: str
     maileroo_domain_email: str
     mailerro_key: str
@@ -24,7 +34,7 @@ class Settings(BaseSettings):
     )
 
 
-settings = Settings()  # type: ignore
+mailerro = MailerroSettings()  # type: ignore
 
 
 class RedisSettings(BaseSettings):
@@ -47,3 +57,15 @@ class TestSettings(BaseSettings):
 
 
 test_settings = TestSettings()  # type: ignore
+
+
+class TwoFactorAuthenticationSettings(BaseSettings):
+    two_factor_secret_key: str
+    two_factor_salt: str
+
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
+    )
+
+
+two_factor_auth = TwoFactorAuthenticationSettings()  # type: ignore

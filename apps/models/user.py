@@ -25,3 +25,5 @@ class User(Base):
     is_admin: Mapped[bool] = mapped_column(server_default=false())
     login_attempt: Mapped[int] = mapped_column(server_default="0")
     user_wallet: Mapped[Wallet] = relationship(back_populates="user")
+    is_2fa_enable: Mapped[bool] = mapped_column(server_default=false())
+    secrete_key_2fa: Mapped[str | None] = mapped_column(String(50))

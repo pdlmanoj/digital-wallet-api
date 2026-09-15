@@ -125,15 +125,15 @@ def deposit(
     request: Request,
     data: DepositMoneySchema,
     db: Annotated[Session, Depends(get_db)],
-    is_user: Annotated[User, Depends(get_current_user)],
+    user: Annotated[User, Depends(get_current_user)],
 ):
     ## TODO: add idempotency for duplicate transaction call
-    user_wallet: Wallet = get_user_wallet(is_user.id, db)
+    wallet: Wallet = get_user_wallet(user.id, db)
 
     reference_id = generate_reference_id()
 
     transaction = Transaction(
-        wallet_id=user_wallet.id,
+        wallet_id=wallet.id,
         type=data.type,
         amount=data.amount,
         status="pending",
@@ -148,7 +148,7 @@ def deposit(
     callback = random.choice(CALLBACK_MOCK)
     if callback == "success":
         transaction.status = "success"
-        user_wallet.balance += data.amount
+        wallet.balance += data.amount
         db.commit()
         return {"msg": f"Transaction Deposit of {data.currency} {data.amount} SUCCESS."}
     else:
@@ -165,14 +165,14 @@ def withdraw(
     request: Request,
     data: WithdrawnMoneySchema,
     db: Annotated[Session, Depends(get_db)],
-    is_user: Annotated[User, Depends(get_current_user)],
+    user: Annotated[User, Depends(get_current_user)],
 ):
-    user_wallet = get_user_wallet(is_user.id, db)
-    check_sufficent_balance(data.amount, user_wallet.balance)
+    wallet = get_user_wallet(user.id, db)
+    check_sufficent_balance(data.amount, wallet.balance)
 
     reference_number = generate_reference_id()
     transaction = Transaction(
-        wallet_id=user_wallet.id,
+        wallet_id=wallet.id,
         type=data.type,
         amount=data.amount,
         status="pending",
@@ -187,19 +187,19 @@ def withdraw(
     callback = random.choice(CALLBACK_MOCK)
 
     if callback == "success":
-        user_wallet.balance -= data.amount
+        wallet.balance -= data.amount
         transaction.status = "success"
         db.commit()
 
         return {
-            "msg": f"The amount of {user_wallet.currency} {data.amount} withdrawn successfully."
+            "msg": f"The amount of {wallet.currency} {data.amount} withdrawn successfully."
         }
 
     else:
         transaction.status = "failed"
         db.commit()
         return {
-            "msg": f"The amount of {user_wallet.currency} {data.amount} failed due to some issue. Please try again later."
+            "msg": f"The amount of {wallet.currency} {data.amount} failed due to some issue. Please try again later."
         }
 
 
@@ -209,9 +209,9 @@ def send_money(
     request: Request,
     data: SendMoneySchema,
     db: Annotated[Session, Depends(get_db)],
-    is_user: Annotated[User, Depends(get_current_user)],
+    user: Annotated[User, Depends(get_current_user)],
 ):
-    sender_wallet = get_user_wallet(is_user.id, db)
+    sender_wallet = get_user_wallet(user.id, db)
     check_receiver_user_exist(data.receiver_phone_number, db)
     receiver_wallet = get_receiver_wallet(data.receiver_phone_number, db)
     check_sufficent_balance(data.amount, sender_wallet.balance)

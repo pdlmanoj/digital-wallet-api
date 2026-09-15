@@ -8,11 +8,12 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import (
     OAuth2PasswordBearer,
 )
+from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from jwt.exceptions import DecodeError, ExpiredSignatureError, InvalidTokenError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from apps.core.config import settings
+from apps.core.config import settings, two_factor_auth
 from apps.db.session import get_db
 from apps.models import User
 
@@ -21,6 +22,8 @@ ACCESS_TOKEN_EXPIRE_IN = settings.access_token_expire_time
 REFRESH_TOKEN_SECRET_KEY = settings.refresh_token_secret_key
 REFRESH_TOKEN_EXPIRE_IN = settings.refresh_token_expire_time
 ALGORITHM = settings.algorithm
+TWO_FACTOR_AUTH_SECRET_KEY = two_factor_auth.two_factor_secret_key
+TWO_FACTOR_AUTH_SALT = two_factor_auth.two_factor_salt
 
 authentication_error_message = "You must be authenticated to perform this action."
 authorization_error_message = "You are not permitted to perfom this action."
@@ -200,3 +203,29 @@ def get_admin(
         )
 
     return is_admin
+
+
+serializer = URLSafeTimedSerializer(TWO_FACTOR_AUTH_SECRET_KEY)
+
+
+def generate_temporary_token(user_id: UUID):
+    return serializer.dumps(str(user_id), salt=TWO_FACTOR_AUTH_SALT)
+
+
+def validate_two_factor_token(token: str, max_age: int = 300):
+    try:
+        user_id = serializer.loads(token, max_age=max_age, salt=TWO_FACTOR_AUTH_SALT)
+        return user_id
+    except SignatureExpired:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "error_type": "2FA.token_expired",
+                "msg": "Token Expired. Please login again to verify for 2FA TOTP.",
+            },
+        )
+    except BadSignature:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"error_type": "2FA.invalid_token", "msg": "Invalid Auth Token"},
+        )

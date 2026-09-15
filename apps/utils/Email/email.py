@@ -2,7 +2,7 @@ from typing import Literal
 
 import requests
 
-from apps.core.config import settings
+from apps.core.config import mailerro
 from apps.utils.Email.template import forget_password_template, signup_template
 from apps.utils.utils import EMAIL_VERIFICATION_OTP_EXPIRED_IN, generate_otp_and_save
 
@@ -11,7 +11,7 @@ class Email:
     """Email send for user registration using Maileroo"""
 
     def __init__(self) -> None:
-        self.config = settings
+        self.config = mailerro
 
     def get_headers(self) -> dict:
 

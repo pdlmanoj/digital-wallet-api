@@ -12,3 +12,5 @@ env
 .ruff_cache
 .coverage
 coverage.xml
+diagram.txt
+docker-learning.txt

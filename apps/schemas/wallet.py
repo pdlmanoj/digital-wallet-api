@@ -61,3 +61,7 @@ class WalletListReadSchema(CreateWalletFormSchema):
             }
         }
     )
+
+
+class WalletProfileSchema(Schema):
+    is_active: bool

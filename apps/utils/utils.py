@@ -43,9 +43,10 @@ def record_failed_password(user: User, db: Session):
 
 
 def record_success_password(user: User, db: Session):
-    user.login_attempt = 0
-    user.status = "active"
-    db.commit()
+    if user.login_attempt != 0:
+        user.login_attempt = 0
+        user.status = "active"
+        db.commit()
 
 
 def generate_random_password(length: int = 12) -> str:
