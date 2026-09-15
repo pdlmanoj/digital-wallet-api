@@ -236,8 +236,8 @@ def forget_password(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
-                "error_type": "user.not_found",
-                "msg": "User with this email not found.",
+                "error_type": "password_reset.requested",
+                "msg": "If an account exists with this email address, a password reset link has been sent.",
             },
         )
 
@@ -251,7 +251,10 @@ def forget_password(
     if response.json().get("success") != True:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email send failed, try again later",
+            detail={
+                "error_type": "password_reset.email_failed",
+                "message": "Unable to send the email at this time. Please try again later.",
+            },
         )
 
     hash_password = password_security.hash_password(password)

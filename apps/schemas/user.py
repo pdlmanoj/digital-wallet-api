@@ -5,6 +5,7 @@ from uuid import UUID
 from pydantic import ConfigDict, EmailStr, Field, field_validator
 
 from apps.core.pydantic import Schema
+from apps.schemas.wallet import WalletProfileSchema
 
 
 class UserCreateSchema(Schema):
@@ -68,11 +69,16 @@ class UserCreateSchema(Schema):
     )
 
 
-class UserResponseSchema(Schema):
-    id: UUID
+class UserProfileResponseSchema(Schema):
     name: str
     email: EmailStr
     phone_number: str
     gender: str
     date_of_birth: date
     status: Literal["active", "inactive"]
+    is_2fa_enable: bool
+    wallet: WalletProfileSchema | None = Field(validation_alias="user_wallet")
+
+
+class UserResponseSchema(UserProfileResponseSchema):
+    id: UUID

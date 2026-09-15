@@ -2,7 +2,6 @@ from datetime import UTC, datetime, timedelta
 
 from faker import Faker
 
-from apps.core.config import settings
 from apps.core.rate_limit import limiter
 from tests.utils import mock_otp
 
@@ -10,8 +9,6 @@ limiter.enabled = False  # Disable rate limiting for tests
 
 PASSWORD_HASH = "$2a$12$x54mYU7XnxeqFlWDmVDGoep.ebTSNze/0gn7i9f2DIP2z/yKiEKvS"
 password = "my@password"
-
-MAILEROO_BASE_URL = settings.maileroo_base_url
 
 fake = Faker()
 reference_id = fake.msisdn()
