@@ -15,6 +15,23 @@ class UserCreateSchema(Schema):
     gender: str
     date_of_birth: date
 
+    @field_validator("name")
+    @classmethod
+    def normalize_name(cls, v):
+        return v.strip()
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, v):
+        return v.strip().lower()
+
+    @field_validator("gender")
+    @classmethod
+    def validate_gender(cls, v):
+        if v not in ["male", "female", "other"]:
+            raise ValueError("Invalid gender. Must be 'male', 'female', or 'other'.")
+        return v
+
     @field_validator("phone_number")
     @classmethod
     def validate_phone_number(cls, v):

@@ -18,6 +18,14 @@ class CreateWalletFormSchema(Schema):
 
         return v
 
+    @field_validator("currency")
+    @classmethod
+    def validate_currency(cls, v):
+        if v and v not in ["NPR"]:
+            raise ValueError("Invalid currency. Must be 'NPR'.")
+
+        return v
+
     model_config = ConfigDict(
         json_schema_extra={"example": {"amount": "100.00", "currency": "NPR"}}
     )
