@@ -37,7 +37,10 @@ def record_failed_password(user: User, db: Session):
         db.refresh(user)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Sorry, your account status is {user.status}. Please contact admin to reactivate you account.",
+            detail={
+                "error_type": "auth.password_lock",
+                "msg": "Your account has been locked due to multiple failed login attempts. Please contact admin to unlock your account.",
+            },
         )
     db.commit()
 
