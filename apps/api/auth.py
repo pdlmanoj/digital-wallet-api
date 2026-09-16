@@ -152,7 +152,7 @@ def confirm_2fa(
     is_valid = obj.verify(totp)
 
     if not is_valid:
-        HTTPException(
+        raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
                 "error_type": "2FA:totp_invalid",
