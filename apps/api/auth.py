@@ -54,7 +54,7 @@ def token(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={
                 "error_type": "auth.inactive_user",
-                "msg": f"Sorry, your account status is {user.status}. Please contact admin to reactivate you account.",
+                "msg": "Your account is inactive. Please contact admin to reactivate your account.",
             },
         )
     else:
