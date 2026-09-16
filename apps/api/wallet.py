@@ -39,7 +39,7 @@ def create(
     wallet_form: CreateWalletFormSchema,
     db: Annotated[Session, Depends(get_db)],
     is_user: Annotated[User, Depends(get_current_user)],
-):
+) -> dict:
 
     user_wallet = db.scalar(select(Wallet).where(Wallet.user_id == is_user.id))
 
@@ -72,10 +72,10 @@ def check_balance(
     request: Request,
     db: Annotated[Session, Depends(get_db)],
     is_user: Annotated[User, Depends(get_current_user)],
-):
+) -> AvailableBalanceReadSchema:
     user_wallet = get_user_wallet(is_user.id, db)
 
-    return user_wallet
+    return AvailableBalanceReadSchema.model_validate(user_wallet)
 
 
 @router.get("/{id}", response_model=WalletListReadSchema)
@@ -85,10 +85,9 @@ def user_wallets(
     id: UUID,
     db: Annotated[Session, Depends(get_db)],
     is_admin: Annotated[User, Depends(get_admin)],
-):
+) -> WalletListReadSchema:
     user_wallet = get_user_wallet(id, db)
-
-    return user_wallet
+    return WalletListReadSchema.model_validate(user_wallet)
 
 
 @router.post("/activate/{id}")
@@ -98,7 +97,7 @@ def activate(
     id: UUID,
     db: Annotated[Session, Depends(get_db)],
     is_admin: Annotated[User, Depends(get_admin)],
-):
+) -> dict:
     user_wallet = get_user_wallet(id, db)
 
     if not user_wallet.is_active:
@@ -122,7 +121,7 @@ def deactivate(
     id: UUID,
     db: Annotated[Session, Depends(get_db)],
     is_admin: Annotated[User, Depends(get_admin)],
-):
+) -> dict:
     user_wallet = get_user_wallet(id, db)
 
     if not user_wallet:

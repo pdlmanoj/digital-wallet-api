@@ -37,8 +37,8 @@ def token(
     request: Request,
     data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Annotated[Session, Depends(get_db)],
-):
-    user = authenticate_user(data.username, data.password, db)
+) -> TokenResponseSchema | Token2FAResponseSchema:
+    user: User | bool = authenticate_user(data.username, data.password, db)
 
     if not user:
         raise HTTPException(
@@ -62,7 +62,11 @@ def token(
 
     if user.is_2fa_enable:
         temp_token = generate_temporary_token(user.id)
-        return {"is_2fa_enable": user.is_2fa_enable, "token": temp_token}
+        return {
+            "is_2fa_enable": user.is_2fa_enable,
+            "token": temp_token,
+            "required_2fa_verification": True,
+        }
 
     payload = {"sub": str(user.id), "name": user.name}
     access_token = create_token(payload)
@@ -78,7 +82,7 @@ def token(
 @limiter.limit("20/minute")
 def get_user_profile(
     request: Request, user: Annotated[User, Depends(get_current_user)]
-):
+) -> UserProfileResponseSchema:
     return UserProfileResponseSchema.model_validate(user)
 
 
@@ -88,14 +92,16 @@ def refresh_token(
     request: Request,
     refresh_token: Annotated[str, Body(embed=True)],
     db: Annotated[Session, Depends(get_db)],
-):
+) -> dict[str, str]:
     access_token = validate_refresh_token(refresh_token, db)
     return {"access_token": access_token, "token_type": "Bearer"}
 
 
 @router.post("/enable-2fa")
 @limiter.limit("5/minute")
-def enable_2fa(request: Request, user: Annotated[User, Depends(get_current_user)]):
+def enable_2fa(
+    request: Request, user: Annotated[User, Depends(get_current_user)]
+) -> StreamingResponse:
     if user.is_2fa_enable:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -111,7 +117,7 @@ def enable_2fa(request: Request, user: Annotated[User, Depends(get_current_user)
 
     img = qrcode.make(uri)
     buffer = BytesIO()
-    img.save(buffer, format="PNG")
+    img.save(buffer, format="PNG")  # type: ignore
     buffer.seek(0)
 
     # save secrete_key in redis for 5 minute
@@ -127,7 +133,7 @@ def confirm_2fa(
     totp: Annotated[str, Body(embed=True)],
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
-):
+) -> dict:
     if user.is_2fa_enable:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -174,7 +180,7 @@ def verify_2fa(
     token: Annotated[str, Header(..., alias="X-Auth-Token")],
     totp: Annotated[str, Body(embed=True)],
     db: Annotated[Session, Depends(get_db)],
-):
+) -> TokenResponseSchema:
     user_id = validate_two_factor_token(token)
     user: User | None = db.scalar(select(User).where(User.id == user_id))
 
@@ -225,7 +231,7 @@ def disable_2fa(
     request: Request,
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
-):
+) -> dict:
     if not user.is_2fa_enable:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

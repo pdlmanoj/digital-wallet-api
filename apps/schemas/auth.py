@@ -22,4 +22,4 @@ class TokenResponseSchema(Schema):
 class Token2FAResponseSchema(Schema):
     is_2fa_enable: bool
     token: str
-    required_2fa_verification: bool = True
+    required_2fa_verification: bool

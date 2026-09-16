@@ -24,7 +24,7 @@ router = APIRouter(prefix="/user", tags=["User"])
 @limiter.limit("5/minute")
 def create_user(
     request: Request, user: UserCreateSchema, db: Annotated[Session, Depends(get_db)]
-):
+) -> UserResponseSchema:
 
     query = db.scalar(
         select(User).filter(
@@ -71,7 +71,9 @@ def get_users(
 
 @router.get("/{id}", response_model=UserResponseSchema)
 @limiter.limit("20/minute")
-def get_user(request: Request, id: UUID, db: Annotated[Session, Depends(get_db)]):
+def get_user(
+    request: Request, id: UUID, db: Annotated[Session, Depends(get_db)]
+) -> UserResponseSchema:
     user = db.scalar(select(User).where(User.id == id))
 
     if not user:
@@ -89,7 +91,7 @@ def send_email(
     request: Request,
     email: Annotated[EmailStr, Body(embed=True)],
     db: Annotated[Session, Depends(get_db)],
-):
+) -> dict:
     user_exist = is_user_exist(email, db)
     if user_exist:
         raise HTTPException(
@@ -120,7 +122,7 @@ def verify_otp(
     request: Request,
     email: Annotated[EmailStr, Body(embed=True)],
     otp: Annotated[str, Body(embed=True)],
-):
+) -> dict:
     is_valid = validate_otp(email, otp)
     if not is_valid:
         raise HTTPException(
@@ -140,7 +142,7 @@ def resend_otp(
     request: Request,
     email: Annotated[EmailStr, Body(embed=True)],
     db: Annotated[Session, Depends(get_db)],
-):
+) -> dict:
     user_exist = is_user_exist(email, db)
     if user_exist:
         raise HTTPException(
@@ -172,7 +174,7 @@ def change_password(
     new_password: Annotated[str, Body(embed=True)],
     db: Annotated[Session, Depends(get_db)],
     is_user: Annotated[User, Depends(get_current_user)],
-):
+) -> dict:
     if len(new_password) < 8:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -229,7 +231,7 @@ def forget_password(
     request: Request,
     email: Annotated[EmailStr, Body(embed=True)],
     db: Annotated[Session, Depends(get_db)],
-):
+) -> dict:
     user = db.scalar(select(User).where(User.email == email))
 
     if not user:

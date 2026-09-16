@@ -23,11 +23,11 @@ CALLBACK_MOCK = ["success", "failed"]
 router = APIRouter(prefix="/transaction", tags=["Transaction"])
 
 
-def generate_reference_id():
+def generate_reference_id() -> str:
     return f"TRAN{datetime.now().strftime('%Y%m%d%I%M')}{uuid4().hex[:12].upper()}"  # noqa: DTZ005
 
 
-def get_transaction_by_ref_id(ref_id: str, db: Session):
+def get_transaction_by_ref_id(ref_id: str, db: Session) -> Transaction:
     transaction = db.scalar(
         select(Transaction).where(Transaction.reference_id == ref_id)
     )
@@ -44,7 +44,7 @@ def get_transaction_by_ref_id(ref_id: str, db: Session):
     return transaction
 
 
-def get_user_wallet(user_id: UUID, db: Session):
+def get_user_wallet(user_id: UUID, db: Session) -> Wallet:
     user_wallet = db.scalar(select(Wallet).where(Wallet.user_id == user_id))
 
     if not user_wallet:
@@ -92,7 +92,7 @@ def check_sufficent_balance(amount: Decimal, user_balance: Decimal):
         )
 
 
-def get_receiver_wallet(receiver: str, db: Session):
+def get_receiver_wallet(receiver: str, db: Session) -> Wallet:
     receiver_wallet: Wallet | None = db.scalar(
         select(Wallet)
         .join(User, Wallet.user_id == User.id)
@@ -126,7 +126,7 @@ def deposit(
     data: DepositMoneySchema,
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(get_current_user)],
-):
+) -> dict:
     ## TODO: add idempotency for duplicate transaction call
     wallet: Wallet = get_user_wallet(user.id, db)
 
@@ -166,7 +166,7 @@ def withdraw(
     data: WithdrawnMoneySchema,
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(get_current_user)],
-):
+) -> dict:
     wallet = get_user_wallet(user.id, db)
     check_sufficent_balance(data.amount, wallet.balance)
 
@@ -210,7 +210,7 @@ def send_money(
     data: SendMoneySchema,
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(get_current_user)],
-):
+) -> dict:
     sender_wallet = get_user_wallet(user.id, db)
     check_receiver_user_exist(data.receiver_phone_number, db)
     receiver_wallet = get_receiver_wallet(data.receiver_phone_number, db)

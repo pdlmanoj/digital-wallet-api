@@ -1,3 +1,4 @@
+from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import datetime
 
@@ -5,6 +6,7 @@ from sqlalchemy import create_engine, func
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
+    Session,
     declared_attr,
     mapped_column,
     sessionmaker,
@@ -42,7 +44,8 @@ class Base(DeclarativeBase):
         )
 
 
-def get_db():
+# Generator[ what it yields,  what it receives,  what it returns]
+def get_db() -> Generator[Session, None, None]:
     session = SessionLocal()
     try:
         yield session
@@ -51,7 +54,7 @@ def get_db():
 
 
 @contextmanager
-def get_db_context():
+def get_db_context() -> Generator[Session, None, None]:
     session = SessionLocal()
     try:
         yield session
