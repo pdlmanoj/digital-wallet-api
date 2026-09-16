@@ -41,7 +41,7 @@ class Email:
         email: str,
         password: str | None = None,
         type: Literal["signup", "forgot_password"] = "signup",
-    ):
+    ) -> requests.Response:
         if type not in ["signup", "forgot_password"]:
             raise ValueError(
                 "Invalid email type. Must be 'signup' or 'forgot_password'."

@@ -1,14 +1,14 @@
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import ConfigDict, field_validator
+from pydantic import ConfigDict, Field, field_validator
 
 from apps.core.pydantic import Schema
 
 
 class CreateWalletFormSchema(Schema):
     currency: str | None
-    amount: Decimal
+    amount: Decimal = Field(validation_alias="balance")
 
     @field_validator("amount")
     @classmethod

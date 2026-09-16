@@ -71,7 +71,9 @@ def create_token(
     return encode_token
 
 
-def decode_token(token: str, token_type: Literal["access", "refresh"] = "access"):
+def decode_token(
+    token: str, token_type: Literal["access", "refresh"] = "access"
+) -> dict:
     secret_key = (
         REFRESH_TOKEN_SECRET_KEY if token_type == "refresh" else ACCESS_TOKEN_SECRET_KEY
     )
@@ -107,7 +109,7 @@ def decode_token(token: str, token_type: Literal["access", "refresh"] = "access"
     return payload
 
 
-def validate_refresh_token(token: str, db: Session):
+def validate_refresh_token(token: str, db: Session) -> str:
     payload = decode_token(token, token_type="refresh")
     if not payload:
         raise HTTPException(
@@ -175,7 +177,7 @@ def get_current_user(
 def get_admin(
     token: Annotated[str, Depends(oauth_schema)],
     db: Annotated[Session, Depends(get_db)],
-):
+) -> User:
     if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -212,7 +214,7 @@ def generate_temporary_token(user_id: UUID):
     return serializer.dumps(str(user_id), salt=TWO_FACTOR_AUTH_SALT)
 
 
-def validate_two_factor_token(token: str, max_age: int = 300):
+def validate_two_factor_token(token: str, max_age: int = 300) -> UUID:
     try:
         user_id = serializer.loads(token, max_age=max_age, salt=TWO_FACTOR_AUTH_SALT)
         return user_id

@@ -1,8 +1,10 @@
+from collections.abc import Generator
+
 import pytest
 import requests_mock
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import Engine, create_engine
+from sqlalchemy.orm import Session, sessionmaker
 
 from apps.core.config import test_settings
 from apps.db.session import Base, get_db
@@ -12,7 +14,7 @@ DATABASE_URL = test_settings.test_database_url.unicode_string()
 
 
 @pytest.fixture(scope="session")
-def pg_engine_maker():
+def pg_engine_maker() -> Generator[Engine, None, None]:
     engine = create_engine(url=DATABASE_URL)
     Base.metadata.create_all(engine)
     try:
@@ -23,7 +25,7 @@ def pg_engine_maker():
 
 
 @pytest.fixture(scope="function")
-def pg_db(pg_engine_maker):
+def pg_db(pg_engine_maker) -> Generator[Session, None, None]:
 
     TestSessionLocal = sessionmaker(
         autocommit=False, autoflush=False, bind=pg_engine_maker
@@ -38,7 +40,7 @@ def pg_db(pg_engine_maker):
 
 
 @pytest.fixture(scope="function")
-def client(pg_db):
+def client(pg_db) -> Generator[TestClient, None, None]:
 
     def override_get_db():
         yield pg_db
@@ -52,14 +54,14 @@ def client(pg_db):
 
 
 @pytest.fixture(scope="function")
-def mock_requests():
+def mock_requests() -> Generator[requests_mock.Mocker, None, None]:
     """create mock HTTP environment"""
     with requests_mock.Mocker() as req_mock:
         yield req_mock
 
 
 @pytest.fixture(scope="function")
-def monkey_patch():
+def monkey_patch() -> Generator[pytest.MonkeyPatch, None, None]:
     mon_patch = pytest.MonkeyPatch()
     try:
         yield mon_patch
