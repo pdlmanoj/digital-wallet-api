@@ -15,6 +15,10 @@ class Settings(BaseSettings):
     access_token_expire_time: int = 10  # min
     refresh_token_secret_key: str
     refresh_token_expire_time: int = 1  # day
+    cors_origins: list[str] = [
+        "http://localhost:5173",  # Vite dev server
+        "http://127.0.0.1:5173",
+    ]
 
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
