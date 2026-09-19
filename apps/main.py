@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from slowapi.errors import RateLimitExceeded
 
 from apps.api.auth import router as auth_router
@@ -22,6 +23,15 @@ app = FastAPI(
 )
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, customer_rate_limit_exception_handler)
+
+# Allow the web frontend to call this API from a browser.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=False,  # we use Authorization headers, not cookies
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(user_router)
 app.include_router(auth_router)

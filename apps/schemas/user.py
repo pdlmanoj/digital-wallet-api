@@ -76,6 +76,7 @@ class UserProfileResponseSchema(Schema):
     gender: str
     date_of_birth: date
     status: Literal["active", "inactive"]
+    is_admin: bool
     is_2fa_enable: bool
     wallet: WalletProfileSchema | None = Field(validation_alias="user_wallet")
 
