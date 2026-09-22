@@ -175,7 +175,7 @@ def change_password(
     db: Annotated[Session, Depends(get_db)],
     is_user: Annotated[User, Depends(get_current_user)],
 ) -> dict:
-    if len(new_password) < 8:
+    if len(current_password) < 8 or len(new_password) < 8:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
@@ -233,15 +233,12 @@ def forget_password(
     db: Annotated[Session, Depends(get_db)],
 ) -> dict:
     user = db.scalar(select(User).where(User.email == email))
+    msg = "If an account exists with this email address, new password has been sent to your email."
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={
-                "error_type": "password_reset.requested",
-                "msg": "If an account exists with this email address, a password reset link has been sent.",
-            },
-        )
+        return {
+            "msg": msg,
+        }
 
     # send random password to user email and update the password in db
     password = generate_random_password(length=12)
@@ -254,7 +251,7 @@ def forget_password(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
-                "error_type": "password_reset.email_failed",
+                "error_type": "forget_password.send_failed",
                 "message": "Unable to send the email at this time. Please try again later.",
             },
         )
@@ -265,4 +262,4 @@ def forget_password(
     user.password = hash_password
     db.commit()
 
-    return {"msg": "New password send to your email successfully."}
+    return {"msg": msg}
