@@ -1,14 +1,16 @@
 from datetime import UTC, datetime, timedelta
 
+import pytest
 from faker import Faker
 
 from apps.core.rate_limit import limiter
-from tests.utils import mock_otp
+from tests.utils import mock_send_email, set_admin
 
 limiter.enabled = False  # Disable rate limiting for tests
 
 PASSWORD_HASH = "$2a$12$x54mYU7XnxeqFlWDmVDGoep.ebTSNze/0gn7i9f2DIP2z/yKiEKvS"
 password = "my@password"
+new_password = "new@password"
 
 fake = Faker()
 reference_id = fake.msisdn()
@@ -47,6 +49,40 @@ def test_duplicate_signup(client):
 
     assert response.status_code == 400
     assert response.json()["detail"]["error_type"] == "create_user.duplicate_user"
+
+
+def test_user_login(client):
+    response = client.post(
+        "/auth/login", data={"username": "jonam.ledule@gmail.com", "password": password}
+    )
+    assert response.status_code == 200
+    pytest.user_token = response.json().get("access_token")
+    assert pytest.user_token is not None
+
+
+def test_admin_signup(client, pg_db):
+    payload = {
+        "name": "Admin User",
+        "email": "admin@gmail.com",
+        "password": password,
+        "phone_number": "9898989899",
+        "gender": "male",
+        "date_of_birth": "1990-01-01",
+    }
+
+    response = client.post("/user/signup", json=payload)
+    phone_number = response.json().get("phone_number")
+    set_admin(pg_db, phone_number)
+    assert response.status_code == 201
+
+
+def test_admin_login(client):
+    response = client.post(
+        "/auth/login", data={"username": "admin@gmail.com", "password": password}
+    )
+    assert response.status_code == 200
+    pytest.admin_token = response.json().get("access_token")
+    assert pytest.admin_token is not None
 
 
 def test_user_not_found(client):
@@ -102,7 +138,7 @@ def test_password_length_failed(client):
 
 def test_send_otp_success(mock_requests, client):
 
-    mock_otp(mock_requests)
+    mock_send_email(mock_requests)
 
     response = client.post("/user/send-otp", json={"email": "myemail@gmail.com"})
 
@@ -111,7 +147,7 @@ def test_send_otp_success(mock_requests, client):
 
 def test_send_otp_failed(client, mock_requests):
 
-    mock_otp(mock_requests, status="failed")
+    mock_send_email(mock_requests, status="failed")
 
     response = client.post("/user/send-otp", json={"email": "testuser@gmail.com"})
 
@@ -121,14 +157,14 @@ def test_send_otp_failed(client, mock_requests):
 
 def test_resend_otp_success(client, mock_requests):
 
-    mock_otp(mock_requests)
+    mock_send_email(mock_requests)
     response = client.post("/user/resend-otp", json={"email": "resendemail@gmail.com"})
     assert response.status_code == 200
 
 
 def test_resend_otp_failed(client, mock_requests):
 
-    mock_otp(mock_requests, status="failed")
+    mock_send_email(mock_requests, status="failed")
     response = client.post("/user/resend-otp", json={"email": "resendemail@gmail.com"})
     assert response.status_code == 400
     assert response.json()["detail"]["error_type"] == "resend_otp.resend_failed"
@@ -151,3 +187,80 @@ def test_verify_otp_failed(client):
     )
     assert response.status_code == 400
     assert response.json()["detail"]["error_type"] == "verify_otp.invalid_otp"
+
+
+def test_get_users_failed(client):
+    response = client.get(
+        "/user/users", headers={"Authorization": f"Bearer {pytest.user_token}"}
+    )
+    assert response.status_code == 403
+    assert response.json()["detail"] == "You are not permitted to perfom this action."
+
+
+def test_get_users_success(client):
+    response = client.get(
+        "/user/users", headers={"Authorization": f"Bearer {pytest.admin_token}"}
+    )
+    assert response.status_code == 200
+
+
+def test_change_password_failed(client):
+    payload = {
+        "current_password": "",
+        "new_password": "new@password",
+    }
+
+    response = client.post(
+        "/user/change-password",
+        headers={"Authorization": f"Bearer {pytest.user_token}"},
+        json=payload,
+    )
+
+    assert response.status_code == 400
+    assert (
+        response.json()["detail"]["error_type"] == "change_password.password_too_short"
+    )
+
+    payload = {
+        "current_password": password,
+        "new_password": password,
+    }
+    response = client.post(
+        "/user/change-password",
+        headers={"Authorization": f"Bearer {pytest.user_token}"},
+        json=payload,
+    )
+    assert response.status_code == 400
+    assert response.json()["detail"]["error_type"] == "change_password.same_as_current"
+
+
+def test_change_password_success(client):
+    payload = {
+        "current_password": password,
+        "new_password": new_password,
+    }
+
+    response = client.post(
+        "/user/change-password",
+        headers={"Authorization": f"Bearer {pytest.user_token}"},
+        json=payload,
+    )
+
+    assert response.status_code == 200
+
+
+def test_forget_password_send_failed(client, mock_requests):
+    mock_send_email(mock_requests, status="failed")
+    response = client.post(
+        "/user/forget-password", json={"email": "jonam.ledule@gmail.com"}
+    )
+    assert response.status_code == 400
+    assert response.json()["detail"]["error_type"] == "forget_password.send_failed"
+
+
+def test_forget_password_send_success(client, mock_requests):
+    mock_send_email(mock_requests)
+    response = client.post(
+        "/user/forget-password", json={"email": "jonam.ledule@gmail.com"}
+    )
+    assert response.status_code == 200
