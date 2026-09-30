@@ -1,4 +1,4 @@
-name: PR check
+name: PR Check
 
 on:
   pull_request:
@@ -36,7 +36,7 @@ jobs:
       REDIS_URL: redis://localhost:6379/0
 
     steps:
-    - name: Checkout Code
+    - name: Checkout repository
       uses: actions/checkout@v6
 
     - name: Install uv
