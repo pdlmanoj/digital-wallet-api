@@ -4,8 +4,8 @@ import string
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.redis import redis_cache
-from app.models.user import User
+from apps.core.redis import redis_cache
+from apps.models.user import User
 
 EMAIL_VERIFICATION_OTP_EXPIRED_IN = 300
 EMAIL_VERIFICATION_KEY = "signup-email:{email}"

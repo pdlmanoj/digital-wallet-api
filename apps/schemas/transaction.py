@@ -3,7 +3,7 @@ from typing import Literal
 
 from pydantic import ConfigDict, Field, field_validator
 
-from app.core.pydantic import Schema
+from apps.core.pydantic import Schema
 
 
 class InitiateTransactionSchema(Schema):

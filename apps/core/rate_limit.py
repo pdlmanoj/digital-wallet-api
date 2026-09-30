@@ -4,7 +4,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.extension import _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 
-from app.core.config import redis_settings
+from apps.core.config import redis_settings
 
 limiter = Limiter(
     key_func=get_remote_address,

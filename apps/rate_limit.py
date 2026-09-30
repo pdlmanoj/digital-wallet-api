@@ -5,7 +5,7 @@ from time import time
 
 from fastapi import HTTPException, status
 
-from app.core.redis import redis_cache
+from apps.core.redis import redis_cache
 
 RATE_LIMIT_KEY = "retry-limit:{client_ip}"
 

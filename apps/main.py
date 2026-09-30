@@ -2,12 +2,12 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi.errors import RateLimitExceeded
 
-from app.api.auth import router as auth_router
-from app.api.transaction import router as transaction_router
-from app.api.user import router as user_router
-from app.api.wallet import router as wallet_router
-from app.core.config import settings
-from app.core.rate_limit import customer_rate_limit_exception_handler, limiter
+from apps.api.auth import router as auth_router
+from apps.api.transaction import router as transaction_router
+from apps.api.user import router as user_router
+from apps.api.wallet import router as wallet_router
+from apps.core.config import settings
+from apps.core.rate_limit import customer_rate_limit_exception_handler, limiter
 
 swagger_ui_parameters = {
     "defaultModelsExpandDepth": -1,  # Disable Schemas shown in Swagger

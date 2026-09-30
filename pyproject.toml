@@ -36,3 +36,5 @@ dev = [
     "pre-commit>=4.6.2",
     "pytest-cov>=7.1.0",
 ]
+[tool.fastapi]
+entrypoint = "apps.main:app"

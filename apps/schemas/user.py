@@ -4,8 +4,8 @@ from uuid import UUID
 
 from pydantic import ConfigDict, EmailStr, Field, field_validator
 
-from app.core.pydantic import Schema
-from app.schemas.wallet import WalletProfileSchema
+from apps.core.pydantic import Schema
+from apps.schemas.wallet import WalletProfileSchema
 
 
 class UserCreateSchema(Schema):

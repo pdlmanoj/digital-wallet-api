@@ -5,11 +5,11 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.rate_limit import limiter
-from app.core.security import get_admin, get_current_user
-from app.db.session import get_db
-from app.models import User, Wallet
-from app.schemas.wallet import (
+from apps.core.rate_limit import limiter
+from apps.core.security import get_admin, get_current_user
+from apps.db.session import get_db
+from apps.models import User, Wallet
+from apps.schemas.wallet import (
     AvailableBalanceReadSchema,
     CreateWalletFormSchema,
     WalletListReadSchema,

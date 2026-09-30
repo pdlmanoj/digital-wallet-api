@@ -1,9 +1,9 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.security import password_security
-from app.models import User
-from app.utils.utils import record_failed_password
+from apps.core.security import password_security
+from apps.models import User
+from apps.utils.utils import record_failed_password
 
 
 def authenticate_user(email: str, password: str, db: Session):
