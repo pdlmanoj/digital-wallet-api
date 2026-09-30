@@ -13,7 +13,7 @@ from sqlalchemy.orm import (
     sessionmaker,
 )
 
-from apps.core.config import database_settings
+from apps.core.db_config import database_settings
 
 engine = create_engine(
     url=re.sub(
