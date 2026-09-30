@@ -11,7 +11,7 @@ I built this project to learn how a production-grade backend is designed and bui
  
 - User signup and account management
 - JWT-based authentication with access and refresh tokens
-- Optional two-factor authentication (2FA)
+- 2FA authentication (optional)
 - OTP verification and password reset
 - Wallet creation and balance management
 - Deposits, withdrawals, and peer-to-peer transfers
