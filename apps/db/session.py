@@ -13,11 +13,13 @@ from sqlalchemy.orm import (
     sessionmaker,
 )
 
-from apps.core.config import settings
+from apps.core.config import database_settings
 
 engine = create_engine(
     url=re.sub(
-        r"^postgresql:", "postgresql+psycopg:", settings.database_url.unicode_string()
+        r"^postgresql:",
+        "postgresql+psycopg:",
+        database_settings.database_url.unicode_string(),
     )
 )
 

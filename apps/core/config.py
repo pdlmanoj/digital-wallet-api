@@ -8,8 +8,7 @@ class Settings(BaseSettings):
     app_name: str
     app_version: str
     debug: bool
-    database_url: PostgresDsn
-    environement: Literal["dev", "testing"] = "dev"
+    environement: Literal["dev", "prod"] = "dev"
     access_token_secret_key: str
     algorithm: str
     access_token_expire_time: int = 10  # min
@@ -26,6 +25,17 @@ class Settings(BaseSettings):
 
 
 settings = Settings()  # type: ignore
+
+
+class DatabaseSettings(BaseSettings):
+    database_url: PostgresDsn
+
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
+    )
+
+
+database_settings = DatabaseSettings()  # type: ignore
 
 
 class MailerroSettings(BaseSettings):
