@@ -8,6 +8,8 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: production
 
     steps:
     - name: Checkout repository
@@ -32,4 +34,4 @@ jobs:
 
     # FastAPI Cloud deployment
     - name: Deploy to FastAPI Cloud
-      run: uv run fastapi-cloud deploy --token ${{ secrets.FASTAPI_CLOUD_DEPLOY_TOKEN }}
+      run: uv run fastapi-cloud deploy --token ${{ secrets.DEPLOY_TOKEN }}
