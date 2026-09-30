@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi.errors import RateLimitExceeded
 
@@ -40,9 +40,14 @@ app.include_router(transaction_router)
 
 
 @app.get("/health-check")
-def health_check(request: Request):
+def health_check():
     return {
         "msg": "Success",
         "app": settings.app_name,
         "debug": settings.debug,
     }
+
+
+@app.get("/")
+def status():
+    return {"server is running.........."}

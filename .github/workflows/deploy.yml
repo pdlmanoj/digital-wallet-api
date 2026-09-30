@@ -33,8 +33,8 @@ jobs:
         DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
     # FastAPI Cloud deployment
-    - name: Install FastAPI Cloud CLI
-      run: uv tool install fastapi-cloud
-
     - name: Deploy to FastAPI Cloud
-      run: fastapi-cloud deploy --token ${{ secrets.DEPLOY_TOKEN }}
+      run: uv run fastapi deploy
+      env:
+        FASTAPI_CLOUD_TOKEN: ${{ secrets.FASTAPI_CLOUD_TOKEN }}
+        FASTAPI_CLOUD_APP_ID: ${{ secrets.FASTAPI_CLOUD_APP_ID }}
