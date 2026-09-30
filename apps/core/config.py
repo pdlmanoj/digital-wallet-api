@@ -16,8 +16,8 @@ database_settings = DatabaseSettings()  # type: ignore
 
 
 class Settings(BaseSettings):
-    app_name: str = "Digital Wallet API"
-    app_version: str = "0.1.0"
+    app_name: str
+    app_version: str
     debug: bool = False
     environement: Literal["dev", "prod"] = "dev"
     access_token_secret_key: str
