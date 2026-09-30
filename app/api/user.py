@@ -6,14 +6,14 @@ from pydantic import EmailStr
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
-from apps.core.rate_limit import limiter
-from apps.core.security import get_admin, get_current_user, password_security
-from apps.db.session import get_db
-from apps.models import User
-from apps.repositories.db import is_user_exist
-from apps.schemas.user import UserCreateSchema, UserResponseSchema
-from apps.utils.Email.email import email as mileroo_email
-from apps.utils.utils import generate_random_password, validate_otp
+from app.core.rate_limit import limiter
+from app.core.security import get_admin, get_current_user, password_security
+from app.db.session import get_db
+from app.models import User
+from app.repositories.db import is_user_exist
+from app.schemas.user import UserCreateSchema, UserResponseSchema
+from app.utils.Email.email import email as mileroo_email
+from app.utils.utils import generate_random_password, validate_otp
 
 router = APIRouter(prefix="/user", tags=["User"])
 

@@ -1,7 +1,7 @@
 import redis
 from dotenv import load_dotenv
 
-from apps.core.config import redis_settings
+from app.core.config import redis_settings
 
 load_dotenv()
 

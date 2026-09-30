@@ -6,8 +6,8 @@ from sqlalchemy import String, false
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid_extensions import uuid7
 
-from apps.db.session import Base
-from apps.models.wallet import Wallet
+from app.db.session import Base
+from app.models.wallet import Wallet
 
 
 class User(Base):

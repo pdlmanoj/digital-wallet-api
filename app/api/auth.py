@@ -9,21 +9,21 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from apps.core.rate_limit import limiter
-from apps.core.redis import redis_cache
-from apps.core.security import (
+from app.core.rate_limit import limiter
+from app.core.redis import redis_cache
+from app.core.security import (
     create_token,
     generate_temporary_token,
     get_current_user,
     validate_refresh_token,
     validate_two_factor_token,
 )
-from apps.db.session import get_db
-from apps.models import User
-from apps.repositories.db import authenticate_user
-from apps.schemas.auth import Token2FAResponseSchema, TokenResponseSchema
-from apps.schemas.user import UserProfileResponseSchema
-from apps.utils.utils import record_success_password
+from app.db.session import get_db
+from app.models import User
+from app.repositories.db import authenticate_user
+from app.schemas.auth import Token2FAResponseSchema, TokenResponseSchema
+from app.schemas.user import UserProfileResponseSchema
+from app.utils.utils import record_success_password
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 

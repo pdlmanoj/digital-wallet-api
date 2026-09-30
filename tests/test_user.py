@@ -3,7 +3,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from faker import Faker
 
-from apps.core.rate_limit import limiter
+from app.core.rate_limit import limiter
 from tests.utils import mock_send_email, set_admin
 
 limiter.enabled = False  # Disable rate limiting for tests

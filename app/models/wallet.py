@@ -5,10 +5,10 @@ from uuid import UUID
 from sqlalchemy import ForeignKey, Numeric, true
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from apps.db.session import Base
+from app.db.session import Base
 
 if TYPE_CHECKING:
-    from apps.models.user import User
+    from app.models.user import User
 
 
 class Wallet(Base):

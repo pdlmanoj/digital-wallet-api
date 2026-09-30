@@ -1,6 +1,6 @@
 from pydantic import ConfigDict
 
-from apps.core.pydantic import Schema
+from app.core.pydantic import Schema
 
 
 class TokenResponseSchema(Schema):

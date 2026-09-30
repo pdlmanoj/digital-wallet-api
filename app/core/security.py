@@ -13,9 +13,9 @@ from jwt.exceptions import DecodeError, ExpiredSignatureError, InvalidTokenError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from apps.core.config import settings, two_factor_auth
-from apps.db.session import get_db
-from apps.models import User
+from app.core.config import settings, two_factor_auth
+from app.db.session import get_db
+from app.models import User
 
 ACCESS_TOKEN_SECRET_KEY = settings.access_token_secret_key
 ACCESS_TOKEN_EXPIRE_IN = settings.access_token_expire_time

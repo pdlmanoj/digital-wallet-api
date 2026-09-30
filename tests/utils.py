@@ -3,8 +3,8 @@ from typing import Literal
 from faker import Faker
 from sqlalchemy.orm import Session
 
-from apps.core.config import mailerro
-from apps.models.user import User
+from app.core.config import mailerro
+from app.models.user import User
 
 MAILEROO_BASE_URL = mailerro.maileroo_base_url
 fake = Faker()
