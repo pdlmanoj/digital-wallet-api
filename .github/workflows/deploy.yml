@@ -26,7 +26,7 @@ jobs:
       run: uv sync --frozen
 
     - name: Run database migrations
-      run: uv run alembic upgrade head
+      run: uv run alembic upgrade heads
       env:
         DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
