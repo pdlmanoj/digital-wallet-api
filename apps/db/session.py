@@ -1,3 +1,4 @@
+import re
 from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import datetime
@@ -14,7 +15,11 @@ from sqlalchemy.orm import (
 
 from apps.core.config import settings
 
-engine = create_engine(url=settings.database_url.unicode_string())
+engine = create_engine(
+    url=re.sub(
+        r"^postgresql:", "postgresql+psycopg:", settings.database_url.unicode_string()
+    )
+)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
