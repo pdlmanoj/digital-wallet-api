@@ -5,10 +5,12 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from apps.api.transaction import generate_reference_id
 from apps.core.rate_limit import limiter
 from apps.core.security import get_admin, get_current_user
 from apps.db.session import get_db
 from apps.models import User, Wallet
+from apps.models.transaction import Transaction
 from apps.schemas.wallet import (
     AvailableBalanceReadSchema,
     CreateWalletFormSchema,
@@ -36,7 +38,7 @@ def get_user_wallet(id: UUID, db: Session):
 @limiter.limit("5/minute")
 def create(
     request: Request,
-    wallet_form: CreateWalletFormSchema,
+    data: CreateWalletFormSchema,
     db: Annotated[Session, Depends(get_db)],
     is_user: Annotated[User, Depends(get_current_user)],
 ) -> dict:
@@ -54,15 +56,24 @@ def create(
 
     wallet = Wallet(
         user_id=is_user.id,
-        currency=wallet_form.currency if wallet_form.currency else "NPR",
-        balance=wallet_form.amount,
+        currency=data.currency if data.currency else "NPR",
+        balance=data.amount,
     )
 
     db.add(wallet)
+
+    transaction = Transaction(
+        wallet_id=wallet.id,
+        type="deposit",
+        amount=data.amount,
+        reference_id=generate_reference_id(),
+        status="success",
+    )
+    db.add(transaction)
     db.commit()
 
     return {
-        "msg": f"Wallet created successfully with initial balance of {wallet_form.currency} {wallet_form.amount}."
+        "msg": f"Wallet successfully created with initial balance of {data.currency} {data.amount}."
     }
 
 
