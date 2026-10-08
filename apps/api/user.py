@@ -336,5 +336,13 @@ def profile_image(
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
 ):
+    if not user.profile_image:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "error_type": "user.profile_image.not_found",
+                "msg": "You haven't uploaded any image. Please upload an image first to view your image.",
+            },
+        )
     response = s3_client.get_object(Bucket=BUCKET_NAME, Key=user.profile_image)
     return StreamingResponse(response["Body"], media_type=response["ContentType"])
