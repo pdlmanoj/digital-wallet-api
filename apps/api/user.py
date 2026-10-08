@@ -312,14 +312,7 @@ def upload_image(
 
     if not user.profile_image:
         key = KEY.format(uuid=user.id, filename=image.filename)
-        s3_client.upload_fileobj(
-            image.file,
-            BUCKET_NAME,
-            key,
-            ExtraArgs={"ContentType": image.headers["content-type"]},
-        )
         user.profile_image = key
-        db.commit()
 
     s3_client.upload_fileobj(
         image.file,
@@ -327,6 +320,7 @@ def upload_image(
         Key=user.profile_image,
         ExtraArgs={"ContentType": image.headers["content-type"]},
     )
+    db.commit()
 
     return {"msg": "Your profile image uploaded successfully."}
 
