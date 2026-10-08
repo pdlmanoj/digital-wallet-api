@@ -1,12 +1,23 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
+from fastapi import (
+    APIRouter,
+    Body,
+    Depends,
+    File,
+    HTTPException,
+    Request,
+    UploadFile,
+    status,
+)
+from fastapi.responses import StreamingResponse
 from pydantic import EmailStr
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from apps.core.rate_limit import limiter
+from apps.core.s3 import build_s3_client
 from apps.core.security import get_admin, get_current_user, password_security
 from apps.db.session import get_db
 from apps.models import User
@@ -16,6 +27,9 @@ from apps.utils.Email.email import email as mileroo_email
 from apps.utils.utils import generate_random_password, validate_otp
 
 router = APIRouter(prefix="/user", tags=["User"])
+s3_client = build_s3_client()
+BUCKET_NAME = "digitalwallet"
+KEY = "user/{uuid}/{filename}"
 
 
 @router.post(
@@ -69,10 +83,13 @@ def get_users(
     return db.execute(select(User)).scalars().all()
 
 
-@router.get("/{id}", response_model=UserResponseSchema)
+@router.get("/details/{id}", response_model=UserResponseSchema)
 @limiter.limit("20/minute")
 def get_user(
-    request: Request, id: UUID, db: Annotated[Session, Depends(get_db)]
+    request: Request,
+    id: UUID,
+    db: Annotated[Session, Depends(get_db)],
+    is_admin: Annotated[User, Depends(get_admin)],
 ) -> UserResponseSchema:
     user = db.scalar(select(User).where(User.id == id))
 
@@ -263,3 +280,61 @@ def forget_password(
     db.commit()
 
     return {"msg": msg}
+
+
+def valid_content_type(content_type):
+    if content_type not in {"image/png", "image/jpeg"}:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail={
+                "error_type": "user.unsupported_format_provided",
+                "msg": "Only .png or .jpeg format allowed",
+            },
+        )
+
+
+@router.post("/profile-image")
+@limiter.limit("2/minute")
+def upload_image(
+    request: Request,
+    image: Annotated[UploadFile, File(...)],
+    user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+):
+    if image.content_type not in {"image/png", "image/jpeg"}:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail={
+                "error_type": "user.unsupported_format_provided",
+                "msg": "Only .png or .jpeg format allowed",
+            },
+        )
+
+    if not user.profile_image:
+        key = KEY.format(uuid=user.id, filename=image.filename)
+        s3_client.upload_fileobj(
+            image.file,
+            BUCKET_NAME,
+            key,
+            ExtraArgs={"ContentType": image.headers["content-type"]},
+        )
+        user.profile_image = key
+        db.commit()
+
+    s3_client.upload_fileobj(
+        image.file,
+        Bucket=BUCKET_NAME,
+        Key=user.profile_image,
+        ExtraArgs={"ContentType": image.headers["content-type"]},
+    )
+
+    return {"msg": "Your profile image uploaded successfully."}
+
+
+@router.get("/profile-image")
+def profile_image(
+    user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+):
+    response = s3_client.get_object(Bucket=BUCKET_NAME, Key=user.profile_image)
+    return StreamingResponse(response["Body"], media_type=response["ContentType"])

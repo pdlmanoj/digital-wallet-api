@@ -86,7 +86,10 @@ def test_admin_login(client):
 
 
 def test_user_not_found(client):
-    response = client.get(f"/user/{fake.uuid4()}")
+    response = client.get(
+        f"/user/details/{fake.uuid4()}",
+        headers={"Authorization": f"Bearer {pytest.admin_token}"},
+    )
     assert response.status_code == 404
     assert response.json()["detail"]["error_type"] == "get_user.user_not_found"
 

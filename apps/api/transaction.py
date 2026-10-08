@@ -211,6 +211,14 @@ def send_money(
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(get_current_user)],
 ) -> dict:
+    if user.phone_number == data.receiver_phone_number:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail={
+                "error_type": "transaction.self_transaction",
+                "msg": "Self transaction not allowed.",
+            },
+        )
     sender_wallet = get_user_wallet(user.id, db)
     check_receiver_user_exist(data.receiver_phone_number, db)
     receiver_wallet = get_receiver_wallet(data.receiver_phone_number, db)
