@@ -27,3 +27,4 @@ class User(Base):
     user_wallet: Mapped[Wallet] = relationship(back_populates="user")
     is_2fa_enable: Mapped[bool] = mapped_column(server_default=false())
     secrete_key_2fa: Mapped[str | None] = mapped_column(String(50))
+    profile_image: Mapped[str | None]

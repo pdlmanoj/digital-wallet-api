@@ -72,3 +72,12 @@ class TwoFactorAuthenticationSettings(BaseSettings):
 
 
 two_factor_auth = TwoFactorAuthenticationSettings()  # type: ignore
+
+
+class AwsCredentialsSettings(BaseSettings):
+    aws_region: str | None = None
+    aws_access_key_id: str | None = None
+    aws_secret_access_key: str | None = None
+
+
+awscredentials = AwsCredentialsSettings()
