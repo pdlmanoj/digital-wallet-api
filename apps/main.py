@@ -50,4 +50,4 @@ def health_check():
 
 @app.get("/")
 def status():
-    return {"server is running.........."}
+    return {"status": "server is running.........."}
