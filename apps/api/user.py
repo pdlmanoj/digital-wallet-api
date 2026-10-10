@@ -1,6 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
+from botocore.exceptions import ClientError
 from fastapi import (
     APIRouter,
     Body,
@@ -11,7 +12,6 @@ from fastapi import (
     UploadFile,
     status,
 )
-from fastapi.responses import StreamingResponse
 from pydantic import EmailStr
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
@@ -30,6 +30,8 @@ router = APIRouter(prefix="/user", tags=["User"])
 s3_client = build_s3_client()
 BUCKET_NAME = "digitalwallet"
 KEY = "user/{uuid}/{filename}"
+EXPIRE_IN = 180  # 3 minutes
+MAX_FILESIZE_ALLOWED = 2 * 1024 * 1024  # 2MB
 
 
 @router.post(
@@ -309,6 +311,23 @@ def upload_image(
                 "msg": "Only .png or .jpeg format allowed",
             },
         )
+    img_size = image.size
+    if img_size is None or img_size == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error_type": "user.file_size_error",
+                "msg": "Uploaded image size cannot determined.",
+            },
+        )
+    if img_size > MAX_FILESIZE_ALLOWED:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error": "user.file_max_size_exceeded",
+                "msg": f"The uploaded image size exceeded max limit of {MAX_FILESIZE_ALLOWED // 1048576} MB.",
+            },
+        )
 
     if not user.profile_image:
         key = KEY.format(uuid=user.id, filename=image.filename)
@@ -328,15 +347,27 @@ def upload_image(
 @router.get("/profile-image")
 def profile_image(
     user: Annotated[User, Depends(get_current_user)],
-    db: Annotated[Session, Depends(get_db)],
 ):
     if not user.profile_image:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={
                 "error_type": "user.profile_image.not_found",
-                "msg": "You haven't uploaded any image. Please upload an image first to view your image.",
+                "msg": "No profile image found. Please upload an image first.",
             },
         )
-    response = s3_client.get_object(Bucket=BUCKET_NAME, Key=user.profile_image)
-    return StreamingResponse(response["Body"], media_type=response["ContentType"])
+    try:
+        url = s3_client.generate_presigned_url(
+            ClientMethod="get_object",
+            Params={"Bucket": BUCKET_NAME, "Key": user.profile_image},
+            ExpiresIn=EXPIRE_IN,
+        )
+    except ClientError:
+        raise InterruptedError(
+            "Exception raised during presigned url generation from aws side."
+        )
+
+    return {
+        "image_url": url,
+        "expires_in": f"{EXPIRE_IN // 60} minutes",
+    }
