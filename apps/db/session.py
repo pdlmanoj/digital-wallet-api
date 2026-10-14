@@ -20,7 +20,8 @@ engine = create_engine(
         r"^postgresql:",
         "postgresql+psycopg:",
         database_settings.database_url.unicode_string(),
-    )
+    ),
+    pool_pre_ping=True,
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
