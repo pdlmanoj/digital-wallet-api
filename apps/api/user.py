@@ -52,7 +52,7 @@ def create_user(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
-                "error_type": "create_user.duplicate_user",
+                "error_type": "user.already_exists",
                 "msg": "It seem you already have an account with us. Please proceed with login.",
             },
         )
@@ -98,7 +98,7 @@ def get_user(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={"error_type": "get_user.user_not_found", "msg": "User not found"},
+            detail={"error_type": "user.not_found", "msg": "User not found"},
         )
 
     return UserResponseSchema.model_validate(user)
@@ -322,7 +322,7 @@ def upload_image(
         )
     if img_size > MAX_FILESIZE_ALLOWED:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
             detail={
                 "error": "user.file_max_size_exceeded",
                 "msg": f"The uploaded image size exceeded max limit of {MAX_FILESIZE_ALLOWED // 1048576} MB.",
