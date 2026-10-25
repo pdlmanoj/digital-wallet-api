@@ -48,7 +48,7 @@ def test_duplicate_signup(client):
     response = client.post("/user/signup", json=payload)
 
     assert response.status_code == 400
-    assert response.json()["detail"]["error_type"] == "create_user.duplicate_user"
+    assert response.json()["detail"]["error_type"] == "user.already_exists"
 
 
 def test_user_login(client):
@@ -91,7 +91,7 @@ def test_user_not_found(client):
         headers={"Authorization": f"Bearer {pytest.admin_token}"},
     )
     assert response.status_code == 404
-    assert response.json()["detail"]["error_type"] == "get_user.user_not_found"
+    assert response.json()["detail"]["error_type"] == "user.not_found"
 
 
 def test_invalid_phone_number(client):
@@ -140,33 +140,25 @@ def test_password_length_failed(client):
 
 
 def test_send_otp_success(mock_requests, client):
-
     mock_send_email(mock_requests)
-
     response = client.post("/user/send-otp", json={"email": "myemail@gmail.com"})
-
     assert response.status_code == 200
 
 
 def test_send_otp_failed(client, mock_requests):
-
     mock_send_email(mock_requests, status="failed")
-
     response = client.post("/user/send-otp", json={"email": "testuser@gmail.com"})
-
     assert response.status_code == 400
     assert response.json()["detail"]["error_type"] == "send_otp.send_failed"
 
 
 def test_resend_otp_success(client, mock_requests):
-
     mock_send_email(mock_requests)
     response = client.post("/user/resend-otp", json={"email": "resendemail@gmail.com"})
     assert response.status_code == 200
 
 
 def test_resend_otp_failed(client, mock_requests):
-
     mock_send_email(mock_requests, status="failed")
     response = client.post("/user/resend-otp", json={"email": "resendemail@gmail.com"})
     assert response.status_code == 400

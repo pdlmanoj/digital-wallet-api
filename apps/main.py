@@ -45,6 +45,7 @@ def health_check():
         "msg": "Success",
         "app": settings.app_name,
         "debug": settings.debug,
+        "environment": settings.environment,
     }
 
 
