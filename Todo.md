@@ -3,7 +3,7 @@
 - [✅] Self transaction not allowed
 - [✅] Initial wallet creation transaction record maintain in transaction db
 - [✅] Profile picture upload feature
-- [ ] Logout endpoint
+- [✅] Logout endpoint
 - [ ] Admin separate dashboard for user management
 - [ ] Mock payment gateway to simulate third-party bank transactions
 - [ ] Add transaction history
