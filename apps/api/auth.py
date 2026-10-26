@@ -71,11 +71,26 @@ def token(
     payload = {"sub": str(user.id), "name": user.name}
     access_token = create_token(payload)
     refresh_token = create_token(payload, token_type="refresh")
+    user.refresh_token = refresh_token
+    db.commit()
 
     return TokenResponseSchema(
         access_token=access_token,
         refresh_token=refresh_token,
     )
+
+
+@router.post("/logout")
+@limiter.limit("3/minute")
+def logout(
+    request: Request,
+    user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+):
+    user.refresh_token = None
+    db.commit()
+
+    return {"msg": "Logout Successfully"}
 
 
 @router.get("/me", response_model=UserProfileResponseSchema)
@@ -86,15 +101,18 @@ def get_user_profile(
     return UserProfileResponseSchema.model_validate(user)
 
 
-@router.post("/refresh")
+@router.post("/refresh", response_model=TokenResponseSchema)
 @limiter.limit("5/minute")
 def refresh_token(
     request: Request,
-    refresh_token: Annotated[str, Body(embed=True)],
+    token: Annotated[str, Body(embed=True)],
     db: Annotated[Session, Depends(get_db)],
-) -> dict[str, str]:
-    access_token = validate_refresh_token(refresh_token, db)
-    return {"access_token": access_token, "token_type": "Bearer"}
+) -> TokenResponseSchema:
+    access_token, refresh_token = validate_refresh_token(token, db)
+    return TokenResponseSchema(
+        access_token=access_token,
+        refresh_token=refresh_token,
+    )
 
 
 @router.post("/enable-2fa")
@@ -218,6 +236,8 @@ def verify_2fa(
 
     access_token = create_token(payload)
     refresh_token = create_token(payload, token_type="refresh")
+    user.refresh_token = refresh_token
+    db.commit()
 
     return TokenResponseSchema(
         access_token=access_token,

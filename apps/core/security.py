@@ -109,7 +109,7 @@ def decode_token(
     return payload
 
 
-def validate_refresh_token(token: str, db: Session) -> str:
+def validate_refresh_token(token: str, db: Session) -> tuple[str, str]:
     payload = decode_token(token, token_type="refresh")
     if not payload:
         raise HTTPException(
@@ -130,7 +130,20 @@ def validate_refresh_token(token: str, db: Session) -> str:
             status_code=status.HTTP_403_FORBIDDEN, detail="User not active"
         )
 
-    return create_token(data={"sub": str(user.id), "name": user.name})
+    if user.refresh_token != token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate refresh token",
+        )
+
+    payload = {"sub": str(user.id), "name": user.name}
+    access_token = create_token(data=payload)
+    refresh_token = create_token(data=payload, token_type="refresh")
+
+    user.refresh_token = refresh_token
+    db.commit()
+
+    return access_token, refresh_token
 
 
 def get_current_user(
