@@ -1,5 +1,7 @@
+from datetime import datetime
 from decimal import Decimal
 from typing import Literal
+from uuid import UUID
 
 from pydantic import ConfigDict, Field, field_validator
 
@@ -88,3 +90,12 @@ class SendMoneySchema(Schema):
             }
         }
     )
+
+
+class RecentTransactionSchema(Schema):
+    id: UUID
+    amount: Decimal
+    type: Literal["deposit", "withdraw"]
+    status: Literal["pending", "failed", "success"]
+    reference_id: str
+    created_at: datetime

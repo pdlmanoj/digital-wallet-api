@@ -1,5 +1,4 @@
 from typing import Annotated
-from uuid import UUID
 
 from botocore.exceptions import ClientError
 from fastapi import (
@@ -18,7 +17,7 @@ from sqlalchemy.orm import Session
 
 from apps.core.rate_limit import limiter
 from apps.core.s3 import build_s3_client
-from apps.core.security import get_admin, get_current_user, password_security
+from apps.core.security import get_current_user, password_security
 from apps.db.session import get_db
 from apps.models import User
 from apps.repositories.db import is_user_exist
@@ -73,35 +72,6 @@ def create_user(
     db.refresh(new_user)
 
     return UserResponseSchema.model_validate(new_user)
-
-
-@router.get("/users", response_model=list[UserResponseSchema])
-@limiter.limit("20/minute")
-def get_users(
-    request: Request,
-    is_admin: Annotated[User, Depends(get_admin)],
-    db: Annotated[Session, Depends(get_db)],
-):
-    return db.execute(select(User)).scalars().all()
-
-
-@router.get("/details/{id}", response_model=UserResponseSchema)
-@limiter.limit("20/minute")
-def get_user(
-    request: Request,
-    id: UUID,
-    db: Annotated[Session, Depends(get_db)],
-    is_admin: Annotated[User, Depends(get_admin)],
-) -> UserResponseSchema:
-    user = db.scalar(select(User).where(User.id == id))
-
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={"error_type": "user.not_found", "msg": "User not found"},
-        )
-
-    return UserResponseSchema.model_validate(user)
 
 
 @router.post("/send-otp")

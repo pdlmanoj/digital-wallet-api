@@ -6,7 +6,7 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, undefer
 
 from apps.core.rate_limit import limiter
 from apps.core.security import get_current_user, get_db
@@ -14,6 +14,7 @@ from apps.models import User, Wallet
 from apps.models.transaction import Transaction
 from apps.schemas.transaction import (
     DepositMoneySchema,
+    RecentTransactionSchema,
     SendMoneySchema,
     WithdrawnMoneySchema,
 )
@@ -231,3 +232,21 @@ def send_money(
     return {
         "msg": f"Amount of {sender_wallet.currency} {data.amount} send successfully to {receiver_wallet.user.name}."
     }
+
+
+@router.get("/recent-transaction", response_model=list[RecentTransactionSchema])
+@limiter.limit("5/minute")
+def recent_transaction(
+    request: Request,
+    user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+):
+    transaction = db.scalars(
+        select(Transaction)
+        .options(undefer(Transaction.created_at))
+        .join(Wallet, Wallet.id == Transaction.wallet_id)
+        .where(Wallet.user_id == user.id)
+        .order_by(Transaction.created_at.desc())
+    ).all()
+
+    return transaction

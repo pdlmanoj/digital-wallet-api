@@ -174,17 +174,22 @@ def get_current_user(
         )
 
     user = db.scalars(select(User).where(User.id == user_id)).one_or_none()
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found.",
         )
-    if user.status == "inactive":
+    elif user.is_admin == True:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail=authorization_error_message
+        )
+    elif user.status == "inactive":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="User not active"
         )
-
-    return user
+    else:
+        return user
 
 
 def get_admin(

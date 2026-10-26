@@ -87,7 +87,7 @@ def test_admin_login(client):
 
 def test_user_not_found(client):
     response = client.get(
-        f"/user/details/{fake.uuid4()}",
+        f"/manage/{fake.uuid4()}/details",
         headers={"Authorization": f"Bearer {pytest.admin_token}"},
     )
     assert response.status_code == 404
@@ -186,7 +186,7 @@ def test_verify_otp_failed(client):
 
 def test_get_users_failed(client):
     response = client.get(
-        "/user/users", headers={"Authorization": f"Bearer {pytest.user_token}"}
+        "/manage/users", headers={"Authorization": f"Bearer {pytest.user_token}"}
     )
     assert response.status_code == 403
     assert response.json()["detail"] == "You are not permitted to perfom this action."
@@ -194,7 +194,7 @@ def test_get_users_failed(client):
 
 def test_get_users_success(client):
     response = client.get(
-        "/user/users", headers={"Authorization": f"Bearer {pytest.admin_token}"}
+        "/manage/users", headers={"Authorization": f"Bearer {pytest.admin_token}"}
     )
     assert response.status_code == 200
 

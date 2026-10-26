@@ -26,6 +26,7 @@ I built this project to learn how a production-grade backend is designed and bui
 - **Caching / Sessions:** Redis
 - **Testing:** Pytest
 - **Package Manager:** uv
+
 ## Getting Started
  
 ### 1. Clone the repository
