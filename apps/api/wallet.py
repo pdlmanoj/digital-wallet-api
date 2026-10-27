@@ -56,15 +56,17 @@ def create(
     wallet = Wallet(
         user_id=is_user.id,
         currency=data.currency if data.currency else "NPR",
-        balance=data.amount,
+        balance=data.balance,
     )
 
     db.add(wallet)
+    db.commit()
+    db.refresh(wallet)
 
     transaction = Transaction(
         wallet_id=wallet.id,
         type="deposit",
-        amount=data.amount,
+        amount=data.balance,
         reference_id=generate_reference_id(),
         status="success",
     )
@@ -72,7 +74,7 @@ def create(
     db.commit()
 
     return {
-        "msg": f"Wallet successfully created with initial balance of {data.currency} {data.amount}."
+        "msg": f"Wallet successfully created with initial balance of {data.currency} {data.balance}."
     }
 
 

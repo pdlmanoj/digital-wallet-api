@@ -8,9 +8,9 @@ from apps.core.pydantic import Schema
 
 class CreateWalletFormSchema(Schema):
     currency: str | None
-    amount: Decimal = Field(validation_alias="balance")
+    balance: Decimal
 
-    @field_validator("amount")
+    @field_validator("balance")
     @classmethod
     def validate_amount(cls, v):
         if v < Decimal(1):
@@ -27,7 +27,7 @@ class CreateWalletFormSchema(Schema):
         return v
 
     model_config = ConfigDict(
-        json_schema_extra={"example": {"amount": "100.00", "currency": "NPR"}}
+        json_schema_extra={"example": {"balance": "100.00", "currency": "NPR"}}
     )
 
 
