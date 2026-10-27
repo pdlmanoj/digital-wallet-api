@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi.errors import RateLimitExceeded
 
+from apps.api.admin import router as admin_router
 from apps.api.auth import router as auth_router
 from apps.api.transaction import router as transaction_router
 from apps.api.user import router as user_router
@@ -12,7 +13,7 @@ from apps.core.rate_limit import customer_rate_limit_exception_handler, limiter
 swagger_ui_parameters = {
     "defaultModelsExpandDepth": -1,  # Disable Schemas shown in Swagger
     "displayRequestDuration": True,  # display execution time next to response status code
-    "persistAuthorization": True,  # keeps logged even after brower reload
+    "persistAuthorization": True,  # keeps logged even after browser reload
 }
 
 app = FastAPI(
@@ -35,6 +36,7 @@ app.add_middleware(
 
 app.include_router(user_router)
 app.include_router(auth_router)
+app.include_router(admin_router)
 app.include_router(wallet_router)
 app.include_router(transaction_router)
 
