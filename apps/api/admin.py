@@ -1,29 +1,34 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from apps.api.transaction import get_user_wallet
+from apps.core.pydantic import PaginatedResponseSchema
 from apps.core.rate_limit import limiter
 from apps.core.security import get_admin
 from apps.db.session import get_db
 from apps.models.user import User
 from apps.schemas.user import UserResponseSchema
 from apps.schemas.wallet import WalletListReadSchema
+from apps.utils.utils import Paginator
 
 router = APIRouter(prefix="/manage", tags=["Admin"])
 
 
-@router.get("/users", response_model=list[UserResponseSchema])
+@router.get("/users", response_model=PaginatedResponseSchema[UserResponseSchema])
 @limiter.limit("20/minute")
 def get_users(
     request: Request,
     _: Annotated[User, Depends(get_admin)],
     db: Annotated[Session, Depends(get_db)],
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=50)] = 5,
 ):
-    return db.execute(select(User)).scalars().all()
+    smth = select(User)
+    return Paginator(db, page, page_size).paginated_response(smth)
 
 
 @router.get("/{id}/details", response_model=UserResponseSchema)
