@@ -1,4 +1,4 @@
-from typing import TypeVar, List, Generic
+from typing import TypeVar
 
 from pydantic import BaseModel, ConfigDict
 
@@ -17,6 +17,6 @@ class PaginationSchema(Schema):
     total_pages: int
 
 
-class PaginatedResponseSchema(BaseModel, Generic[T]):
+class PaginatedResponseSchema[T](BaseModel):
     pagination: PaginationSchema
-    results: List[T]
+    results: list[T]
