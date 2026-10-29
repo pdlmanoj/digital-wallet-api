@@ -4,10 +4,11 @@ from decimal import Decimal
 from typing import Annotated
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session, undefer
 
+from apps.core.pydantic import PaginatedResponseSchema
 from apps.core.rate_limit import limiter
 from apps.core.security import get_current_user, get_db
 from apps.models import User, Wallet
@@ -18,6 +19,7 @@ from apps.schemas.transaction import (
     SendMoneySchema,
     WithdrawnMoneySchema,
 )
+from apps.utils.utils import Paginator
 
 CALLBACK_MOCK = ["success", "failed"]
 
@@ -234,19 +236,24 @@ def send_money(
     }
 
 
-@router.get("/recent-transaction", response_model=list[RecentTransactionSchema])
+@router.get(
+    "/recent-transaction",
+    response_model=PaginatedResponseSchema[RecentTransactionSchema],
+)
 @limiter.limit("5/minute")
 def recent_transaction(
     request: Request,
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=50)] = 5,
 ):
-    transaction = db.scalars(
+    smth = (
         select(Transaction)
         .options(undefer(Transaction.created_at))
         .join(Wallet, Wallet.id == Transaction.wallet_id)
         .where(Wallet.user_id == user.id)
         .order_by(Transaction.created_at.desc())
-    ).all()
+    )
 
-    return transaction
+    return Paginator(db, page, page_size).paginated_response(smth)
