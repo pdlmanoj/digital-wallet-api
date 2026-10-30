@@ -4,17 +4,21 @@ A production-style wallet REST API built with FastAPI. It supports user accounts
  
 ## Why I Built This
  
-I built this project to learn how a production-grade backend is designed and built from the ground up, not just how to make an API that works, but how to make one that is secure, reliable, and ready for real use.
+I built this project to learn how to design and build a production-grade backend from the ground up—not just an API that works, but one that is secure, reliable, and ready for real-world use.
  
  
 ## Features
- 
-- User signup and account management
-- JWT-based authentication with access and refresh tokens
-- 2FA authentication (optional)
-- OTP verification and password reset
-- Wallet creation and balance management
-- Deposits, withdrawals, and peer-to-peer transfers
+
+- User registration, profile lookup, password change, password reset, and email OTP verification
+- JWT access and refresh tokens, logout, and protected routes
+- Optional 2FA setup, confirmation, verification, and disable flows
+- One wallet per user with NPR balance management
+- Deposits, withdrawals, and user-to-user transfers by phone number
+- Recent transaction history with page and page-size pagination
+- Profile image upload and expiring S3-compatible presigned URLs
+- Admin-only user and wallet management endpoints
+- Request rate limiting through Redis and SlowAPI
+- Alembic migrations and Pytest integration tests
 
 ## Tech Stack
  
@@ -28,41 +32,21 @@ I built this project to learn how a production-grade backend is designed and bui
 - **Package Manager:** uv
 
 ## Getting Started
- 
-### 1. Clone the repository
- 
+
+### Setup
+
 ```bash
 git clone https://github.com/pdlmanoj/digital-wallet-api.git
 cd digital-wallet-api
-```
- 
-### 2. Install dependencies
- 
-```bash
 uv sync
-```
- 
-### 3. Set up environment variables
- 
-```bash
 cp .env.sample .env
-```
- 
-Then open `.env` and fill in your PostgreSQL, Redis, JWT, 2FA, and email settings.
- 
-### 4. Apply database migrations
- 
-```bash
 uv run alembic upgrade head
-```
- 
-### 5. Run the API
- 
-```bash
 uv run uvicorn apps.main:app --reload
 ```
- 
-The API is now available at `http://127.0.0.1:8000`.
+
+Copy `.env.sample` to `.env` and add your PostgreSQL, Redis, JWT, 2FA, and email settings before running the migration.
+
+The API runs at `http://127.0.0.1:8000`.
  
 ## API Overview
  
@@ -72,12 +56,13 @@ The API is now available at `http://127.0.0.1:8000`.
 | `/auth` | Login, refresh tokens, current user, and 2FA |
 | `/wallet` | Create and manage a wallet, check balance |
 | `/transaction` | Deposit, withdraw, and send money |
+| `/manage` | Admin-only user and wallet management |
  
 Full request/response schemas and interactive testing are available via Swagger UI at `/docs`.
  
 ## Running Tests
  
-Tests use a separate `TEST_DATABASE_URL`, so make sure a test PostgreSQL database is set up and configured in `.env` before running them.
+Configure `TEST_DATABASE_URL` in `.env`, then run:
  
 ```bash
 uv run pytest
