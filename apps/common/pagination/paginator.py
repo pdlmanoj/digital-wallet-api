@@ -36,7 +36,7 @@ class Paginator:
         }
         response = {
             "pagination": pagination,
-            "results": self._get_results(results),
+            "results": results,
         }
 
         return response
