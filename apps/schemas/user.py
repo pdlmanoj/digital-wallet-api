@@ -80,6 +80,26 @@ class UserProfileResponseSchema(Schema):
     is_2fa_enable: bool
     wallet: WalletProfileSchema | None = Field(validation_alias="user_wallet")
 
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "name": "Ram Sharma",
+                "email": "test@gmail.com",
+                "phone_number": "9847284181",
+                "gender": "male",
+                "date_of_birth": "1999-01-01",
+                "status": "active",
+                "is_admin": False,
+                "is_2fa_enable": False,
+                "wallet": {
+                    "is_active": True,
+                },
+            }
+        }
+    )
+
 
 class UserResponseSchema(UserProfileResponseSchema):
     id: UUID
+    created_at: datetime
+    updated_at: datetime

@@ -69,7 +69,7 @@ def create_user(
 
     db.add(new_user)
     db.commit()
-    db.refresh(new_user)
+    db.refresh(new_user, attribute_names=["created_at", "updated_at"])
 
     return UserResponseSchema.model_validate(new_user)
 
