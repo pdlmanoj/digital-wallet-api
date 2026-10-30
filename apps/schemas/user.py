@@ -101,3 +101,5 @@ class UserProfileResponseSchema(Schema):
 
 class UserResponseSchema(UserProfileResponseSchema):
     id: UUID
+    created_at: datetime
+    updated_at: datetime

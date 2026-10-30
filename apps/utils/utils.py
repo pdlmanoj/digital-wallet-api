@@ -2,8 +2,7 @@ import random
 import string
 
 from fastapi import HTTPException, status
-from sqlalchemy import func, select
-from sqlalchemy.orm import Query, Session
+from sqlalchemy.orm import Session
 
 from apps.core.redis import redis_cache
 from apps.models.user import User
@@ -63,33 +62,3 @@ def generate_random_password(length: int = 12) -> str:
     password = "".join(random.choices(combined, k=length))
 
     return password
-
-
-class Paginator:
-    def __init__(self, db: Session, page: int, page_size: int):
-        self.db = db
-        self.page = page
-        self.page_size = page_size
-
-    def _get_results(self, query: Query):
-        return query.all()
-
-    def _get_pagination_query(self, query: Query):
-        offset = (self.page - 1) * self.page_size
-        self.count = self.db.scalar(select(func.count()).select_from(query.subquery()))
-        self.total_pages = (int(self.count) + self.page_size - 1) // self.page_size
-        return self.db.scalars(query.offset(offset).limit(self.page_size))
-
-    def paginated_response(self, query: Query):
-        paginated_query = self._get_pagination_query(query)
-        response = {
-            "pagination": {
-                "page": self.page,
-                "page_size": self.page_size,
-                "total": self.count,
-                "total_pages": self.total_pages,
-            },
-            "results": self._get_results(paginated_query),
-        }
-
-        return response

@@ -8,7 +8,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session, undefer
 
-from apps.core.pydantic import PaginatedResponseSchema
+from apps.common.pagination.paginator import Paginator
+from apps.common.pagination.schema import PaginatedResponseSchema
 from apps.core.rate_limit import limiter
 from apps.core.security import get_current_user, get_db
 from apps.models import User, Wallet
@@ -19,7 +20,6 @@ from apps.schemas.transaction import (
     SendMoneySchema,
     WithdrawnMoneySchema,
 )
-from apps.utils.utils import Paginator
 
 CALLBACK_MOCK = ["success", "failed"]
 
