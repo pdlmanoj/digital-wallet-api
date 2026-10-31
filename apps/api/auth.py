@@ -14,6 +14,7 @@ from apps.core.redis import redis_cache
 from apps.core.security import (
     create_token,
     generate_temporary_token,
+    get_authenticated_user,
     get_current_user,
     validate_refresh_token,
     validate_two_factor_token,
@@ -96,7 +97,8 @@ def logout(
 @router.get("/me", response_model=UserProfileResponseSchema)
 @limiter.limit("20/minute")
 def get_user_profile(
-    request: Request, user: Annotated[User, Depends(get_current_user)]
+    request: Request,
+    user: Annotated[User, Depends(get_authenticated_user)],
 ) -> UserProfileResponseSchema:
     return UserProfileResponseSchema.model_validate(user)
 

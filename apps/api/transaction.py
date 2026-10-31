@@ -240,7 +240,7 @@ def send_money(
     "/recent-transaction",
     response_model=PaginatedResponseSchema[RecentTransactionSchema],
 )
-@limiter.limit("5/minute")
+@limiter.limit("20/minute")
 def recent_transaction(
     request: Request,
     user: Annotated[User, Depends(get_current_user)],

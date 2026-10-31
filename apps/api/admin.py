@@ -12,6 +12,7 @@ from apps.core.rate_limit import limiter
 from apps.core.security import get_admin
 from apps.db.session import get_db
 from apps.models.user import User
+from apps.models.wallet import Wallet
 from apps.schemas.user import UserResponseSchema
 from apps.schemas.wallet import WalletListReadSchema
 
@@ -39,7 +40,9 @@ def get_user(
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[User, Depends(get_admin)],
 ) -> UserResponseSchema:
-    user = db.scalar(select(User).where(User.id == id))
+    user = db.scalar(
+        select(User).options(undefer_group("timestamps")).where(User.id == id)
+    )
 
     if not user:
         raise HTTPException(
@@ -50,7 +53,7 @@ def get_user(
     return UserResponseSchema.model_validate(user)
 
 
-@router.post("/inactive/{id}")
+@router.post("/inactive-user/{id}")
 @limiter.limit("20/minute")
 def inactive_user(
     request: Request,
@@ -80,7 +83,38 @@ def inactive_user(
     return {"msg": "User inactivated successfully."}
 
 
-@router.get("/{id}", response_model=WalletListReadSchema)
+@router.post("/reactivate-user/{id}")
+@limiter.limit("20/minute")
+def reactivate_user(
+    request: Request,
+    id: UUID,
+    db: Annotated[Session, Depends(get_db)],
+    _: Annotated[User, Depends(get_admin)],
+):
+
+    user = db.scalar(select(User).where(User.id == id))
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"error_type": "user.not_found", "msg": "User not found"},
+        )
+
+    if user.status == "active":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error_type": "user.already_inactive",
+                "msg": "User already inactive",
+            },
+        )
+    user.status = "active"
+    db.commit()
+
+    return {"msg": "User reactivated successfully."}
+
+
+@router.get("/user-wallet/{id}", response_model=WalletListReadSchema)
 @limiter.limit("20/minute")
 def user_wallets(
     request: Request,
@@ -100,7 +134,7 @@ def activate(
     db: Annotated[Session, Depends(get_db)],
     _: Annotated[User, Depends(get_admin)],
 ) -> dict:
-    user_wallet = get_user_wallet(id, db)
+    user_wallet = db.scalars(select(Wallet).where(Wallet.user_id == id)).one()
 
     if not user_wallet.is_active:
         user_wallet.is_active = True
