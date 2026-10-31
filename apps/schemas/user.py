@@ -80,6 +80,11 @@ class UserProfileResponseSchema(Schema):
     is_2fa_enable: bool
     wallet: WalletProfileSchema | None = Field(validation_alias="user_wallet")
 
+    @field_validator("phone_number", mode="before")
+    @classmethod
+    def format_phone_number(cls, value: str) -> str:
+        return f"+977{value}"
+
     model_config = ConfigDict(
         json_schema_extra={
             "example": {

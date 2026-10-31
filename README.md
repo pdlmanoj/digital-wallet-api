@@ -5,7 +5,11 @@ A production-style wallet REST API built with FastAPI. It supports user accounts
 ## Why I Built This
  
 I built this project to learn how to design and build a production-grade backend from the ground up—not just an API that works, but one that is secure, reliable, and ready for real-world use.
- 
+
+## Live Demo
+
+- **Frontend:** [digitalwallet](https://frontend-digitial-wallet.onrender.com)
+- **API Documentation:** [Swagger](https://api.pdlmanoj.com.np/docs)
  
 ## Features
 
@@ -35,6 +39,8 @@ I built this project to learn how to design and build a production-grade backend
 
 ### Setup
 
+Make sure Python 3.12 or newer is installed before setting up the project.
+
 ```bash
 git clone https://github.com/pdlmanoj/digital-wallet-api.git
 cd digital-wallet-api
@@ -56,7 +62,7 @@ The API runs at `http://127.0.0.1:8000`.
 | `/auth` | Login, refresh tokens, current user, and 2FA |
 | `/wallet` | Create and manage a wallet, check balance |
 | `/transaction` | Deposit, withdraw, and send money |
-| `/manage` | Admin-only user and wallet management |
+| `/manage` | Admin-only user details, status, and wallet management |
  
 Full request/response schemas and interactive testing are available via Swagger UI at `/docs`.
  
