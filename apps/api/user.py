@@ -17,7 +17,11 @@ from sqlalchemy.orm import Session
 
 from apps.core.rate_limit import limiter
 from apps.core.s3 import build_s3_client
-from apps.core.security import get_current_user, password_security
+from apps.core.security import (
+    get_authenticated_user,
+    get_current_user,
+    password_security,
+)
 from apps.db.session import get_db
 from apps.models import User
 from apps.repositories.db import is_user_exist
@@ -270,7 +274,7 @@ def valid_content_type(content_type):
 def upload_image(
     request: Request,
     image: Annotated[UploadFile, File(...)],
-    user: Annotated[User, Depends(get_current_user)],
+    user: Annotated[User, Depends(get_authenticated_user)],
     db: Annotated[Session, Depends(get_db)],
 ):
     if image.content_type not in {"image/png", "image/jpeg"}:
@@ -316,7 +320,7 @@ def upload_image(
 
 @router.get("/profile-image")
 def profile_image(
-    user: Annotated[User, Depends(get_current_user)],
+    user: Annotated[User, Depends(get_authenticated_user)],
 ):
     if not user.profile_image:
         raise HTTPException(

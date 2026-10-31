@@ -146,7 +146,7 @@ def validate_refresh_token(token: str, db: Session) -> tuple[str, str]:
     return access_token, refresh_token
 
 
-def get_current_user(
+def get_authenticated_user(
     token: Annotated[str, Depends(oauth_schema)],
     db: Annotated[Session, Depends(get_db)],
 ) -> User:
@@ -175,54 +175,36 @@ def get_current_user(
 
     user = db.scalars(select(User).where(User.id == user_id)).one_or_none()
 
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found.",
-        )
-    elif user.is_admin == True:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail=authorization_error_message
-        )
-    elif user.status == "inactive":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="User not active"
-        )
-    else:
-        return user
-
-
-def get_admin(
-    token: Annotated[str, Depends(oauth_schema)],
-    db: Annotated[Session, Depends(get_db)],
-) -> User:
-    if not token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=authentication_error_message,
-        )
-
-    payload = decode_token(token)
-    user_id: User | None = payload.get("sub")
-
-    if not user_id:
+    if not user or user.status == "inactive":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials.",
+            headers={"WWW-Authenticate": "Bearer"},
         )
 
-    is_admin = db.scalar(
-        select(User).where(
-            User.id == user_id, User.status == "active", User.is_admin.is_(True)
-        )
-    )
+    return user
 
-    if not is_admin:
+
+def get_current_user(
+    user: Annotated[User, Depends(get_authenticated_user)],
+) -> User:
+    if user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=authorization_error_message,
+        )
+    return user
+
+
+def get_admin(
+    user: Annotated[User, Depends(get_authenticated_user)],
+) -> User:
+    if not user.is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail=authorization_error_message
         )
 
-    return is_admin
+    return user
 
 
 serializer = URLSafeTimedSerializer(TWO_FACTOR_AUTH_SECRET_KEY)
