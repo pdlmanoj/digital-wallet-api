@@ -31,7 +31,7 @@ def test_signup(client):
     assert response.status_code == 201
 
     assert response.json()["name"] == "Jonam Ledule"
-    assert response.json()["phone_number"] == "9898989898"
+    assert response.json()["phone_number"] == "+9779898989898"
     assert response.json().get("password") is None
 
 
@@ -72,7 +72,7 @@ def test_admin_signup(client, pg_db):
 
     response = client.post("/user/signup", json=payload)
     phone_number = response.json().get("phone_number")
-    set_admin(pg_db, phone_number)
+    set_admin(pg_db, phone_number[4:])
     assert response.status_code == 201
 
 
